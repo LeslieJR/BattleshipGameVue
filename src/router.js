@@ -13,18 +13,16 @@ export default new Router({
       component: () => import('./views/Home.vue')
     },
     {
+      path: '/login',
+      name: 'login',
+      component: () => import('./views/Login.vue')
+    },
+    {
       path: '/game_view/:gp',
       name: 'game',
       component: () => import('./views/Gameview.vue'),
       props: true,
     },
-    {
-      path: '/manager',
-      name: 'manager',
-      // route level code-splitting
-      // this generates a separate chunk (about.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('./views/Manager.vue')
-    }
+
   ]
 })

@@ -6,7 +6,7 @@
           <router-link to="/game_view/:gp">Game</router-link>
         </v-list-item>
         <v-list-item>
-          <router-link to="/manager">Manager</router-link>
+          <router-link to="/login">Login</router-link>
         </v-list-item>
         <v-list-item>
           <router-link to="/">Home</router-link>

@@ -10,9 +10,7 @@
       </thead>
       <tbody slot="body">
         <tr v-for="result in results" :key="result.id">
-          <td>
-            {{ result.id }}
-          </td>
+          <td>np{{ result.id }}</td>
           <td>
             {{ result.creation | moment("dddd, MMMM Do YYYY, h:mm:ss a") }}
           </td>

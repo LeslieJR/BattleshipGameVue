@@ -11,7 +11,7 @@
             prepend-icon="mdi-account"
             v-model="userName"
           ></v-text-field>
-<!-- v-model to update the data that is returned and after used to do the POST method during the fetch -->
+          <!-- v-model to update the data that is returned and after used to do the POST method during the fetch -->
           <v-text-field
             id="password"
             label="Password"
@@ -30,7 +30,15 @@
     <v-card max-width="400">
       <v-card-actions>
         <div class="flex-grow-1"><p>If you're already logged in:</p></div>
-        <v-btn color="primary">Log out</v-btn>
+        <v-btn color="primary" @click="logout">Log out</v-btn>
+      </v-card-actions>
+    </v-card>
+    <v-card max-width="400">
+      <v-card-actions>
+        <div class="flex-grow-1">
+          <p>To create an account:</p>
+          <router-link to="/registration">Registration</router-link>
+        </div>
       </v-card-actions>
     </v-card>
   </div>
@@ -46,19 +54,35 @@ export default {
   },
   methods: {
     login() {
-      console.log("login");
-      var ourData = {
-        userName: this.userName,
-        password: this.password
-      };
-
       fetch("/api/login", {
         credentials: "include",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded"
         },
         method: "POST",
-        body: this.getBody(ourData)
+        body: this.getBody({
+          userName: this.userName,
+          password: this.password
+        })
+      })
+        .then(data => {
+          console.log("Request success: ", data);
+          if (data.ok) {
+            // if the request success and the data is ok, so the user is logged in, we want to change the view (from the login view to the home view (path: /s))
+            this.$router.push("/");
+          }
+        })
+        .catch(function(error) {
+          console.log("Request failure: ", error);
+        });
+    },
+    logout() {
+      fetch("/api/logout", {
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        method: "POST"
       })
         .then(function(data) {
           console.log("Request success: ", data);

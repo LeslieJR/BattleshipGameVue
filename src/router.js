@@ -18,6 +18,11 @@ export default new Router({
       component: () => import('./views/Login.vue')
     },
     {
+      path: '/registration',
+      name: 'registration',
+      component: () => import('./views/Registration.vue')
+    },
+    {
       path: '/game_view/:gp',
       name: 'game',
       component: () => import('./views/Gameview.vue'),

@@ -1,6 +1,8 @@
 <template>
   <div>
     <h1>Game Manager</h1>
+    <p v-if="player != 'guest'">Welcome {{ player.email }}</p>
+    <p v-else>You're not logged in (Guest view)</p>
     <v-table :data="results">
       <thead slot="head">
         <th>Game id</th>
@@ -10,7 +12,7 @@
       </thead>
       <tbody slot="body">
         <tr v-for="result in results" :key="result.id">
-          <td>np{{ result.id }}</td>
+          <td>{{ result.id }}</td>
           <td>
             {{ result.creation | moment("dddd, MMMM Do YYYY, h:mm:ss a") }}
           </td>
@@ -54,7 +56,8 @@ export default {
   data() {
     return {
       results: [],
-      scores: []
+      scores: [],
+      player: "guest" //if there is not a user logged in --> guest
     };
   },
   created() {
@@ -63,7 +66,8 @@ export default {
         return response.json();
       })
       .then(json => {
-        this.results = json;
+        this.results = json.games;
+        this.player = json.player; //is there is a user logged in
         console.log(json);
       });
   },
@@ -87,10 +91,7 @@ export default {
       return this.scores.sort(function(a, b) {
         var result = b.total - a.total;
         if (result === 0) {
-          result = b.wins - a.wins;
-          if (result === 0) {
-            result = a.loses - b.loses;
-          }
+          result = a.wins + a.loses + a.ties - (b.wins + b.loses + b.ties); //to compare by the games played
         }
         return result;
       });

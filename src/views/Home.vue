@@ -1,18 +1,33 @@
 <template>
-  <div>
+  <div class="container">
     <h1>Game Manager</h1>
-    <p v-if="player != 'guest'">Welcome {{ player.email }}</p>
-    <p v-else>You're not logged in (Guest view)</p>
+    <div v-if="player != 'guest'" class="d-flex justify-space-between">
+      <p>
+        Welcome <b>{{ player.email }}!</b>
+      </p>
+      <v-btn color="primary" @click="logout">Log Out</v-btn>
+    </div>
+    <div v-else>
+      <p>You're not logged in (Guest view)</p>
+      <p>
+        Go to
+        <router-link to="/registration">Login/Registration</router-link> to
+        Login or Create an account
+      </p>
+    </div>
     <v-table :data="results">
       <thead slot="head">
         <th>Game id</th>
         <th>Creation</th>
         <th>GamePlayer</th>
         <th>Opponent</th>
+        <th v-if="player != 'guest'"></th>
       </thead>
       <tbody slot="body">
         <tr v-for="result in results" :key="result.id">
-          <td>{{ result.id }}</td>
+          <td>
+            {{ result.id }}
+          </td>
           <td>
             {{ result.creation | moment("dddd, MMMM Do YYYY, h:mm:ss a") }}
           </td>
@@ -23,6 +38,14 @@
             {{ result.gamePlayers[1].player.email }}
           </td>
           <td v-else>Waiting for opponent</td>
+          <td v-if="player != 'guest'">
+            <!-- checkIfPlayerIn(result) when result is equivalent of a game so result.gamePlayer.forEach goes for each gp of the game -->
+            <v-btn
+              v-if="checkIfPlayerIn(result)"
+              :to="'/game_view/' + checkIfPlayerIn(result)"
+              >ENTER</v-btn
+            >
+          </td>
         </tr>
       </tbody>
     </v-table>
@@ -61,20 +84,23 @@ export default {
     };
   },
   created() {
-    fetch("/api/games", { method: "GET" })
-      .then(response => {
-        return response.json();
-      })
-      .then(json => {
-        this.results = json.games;
-        this.player = json.player; //is there is a user logged in
-        console.log(json);
-      });
+    this.fetchGames();
   },
   mounted() {
     this.getScores();
   },
   methods: {
+    fetchGames() {
+      fetch("/api/games", { method: "GET" })
+        .then(response => {
+          return response.json();
+        })
+        .then(json => {
+          this.results = json.games;
+          this.player = json.player; //is there is a user logged in
+          console.log(json);
+        });
+    },
     getScores() {
       fetch("/api/scores", { method: "GET" })
         .then(response => {
@@ -84,6 +110,35 @@ export default {
           this.scores = json;
           console.log(json);
         });
+    },
+    logout() {
+      fetch("/api/logout", {
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        method: "POST"
+      })
+        .then(data => {
+          console.log("Request success: ", data);
+          if (data.ok) {
+            // if the request success and the data is ok, so the user is logged in, we want to change the view (from the login view to the home view (path: /s))
+            this.$router.push("/");
+            this.fetchGames();
+          }
+        })
+        .catch(function(error) {
+          console.log("Request failure: ", error);
+        });
+    },
+    // checkIfPlayerIn method => to compare if the id of the player(user) that is logged in is equal to one of the id of the gameplayers in each of the games 
+    // when the ids are equals the var found equals the id and is returned
+    checkIfPlayerIn(game) {
+      let found = false;
+      game.gamePlayers.forEach(gp => {
+        if (gp.player.id == this.player.id) found = gp.id;
+      });
+      return found;
     }
   },
   computed: {
@@ -109,11 +164,15 @@ th {
   border: 2px solid black;
   padding: 10px;
 }
-div {
+div.container {
   margin: 0 100px;
 }
+
 td:first-child {
   text-align: center;
+}
+.d-flex {
+  padding-right: 10%;
 }
 </style>
 

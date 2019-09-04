@@ -45,12 +45,18 @@
               :to="'/game_view/' + checkIfPlayerIn(result)"
               >ENTER</v-btn
             >
+            <v-btn
+              v-else-if="result.gamePlayers.length == 1"
+              @click="joinGame(result)"
+              >JOIN</v-btn
+            >
           </td>
         </tr>
       </tbody>
     </v-table>
-    <h1>Leaderboard</h1>
+    <v-btn v-if="player != 'guest'" @click="createGame">CREATE A GAME</v-btn>
 
+    <h1>Leaderboard</h1>
     <table>
       <thead>
         <th>Name</th>
@@ -111,6 +117,47 @@ export default {
           console.log(json);
         });
     },
+    createGame() {
+      fetch("/api/games", {
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        method: "POST"
+      })
+        .then(data => {
+          console.log("Request success: ", data);
+          if (data.ok) {
+            this.fetchGames();
+          }
+        })
+        .catch(function(error) {
+          console.log("Request failure: ", error);
+        });
+    },
+    joinGame(result) {
+      fetch(`/api/game/${result.id}/players`, {
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        method: "POST"
+      })
+        .then(data => {
+          console.log("Request success: ", data);
+          if (data.ok) {
+            console.log("created");
+            return data.json();
+          }
+        })
+        .then(json => {
+          var gpId = json.gpId;
+          this.$router.push(`/game_view/${gpId}`);
+        })
+        .catch(function(error) {
+          console.log("Request failure: ", error);
+        });
+    },
     logout() {
       fetch("/api/logout", {
         credentials: "include",
@@ -131,7 +178,7 @@ export default {
           console.log("Request failure: ", error);
         });
     },
-    // checkIfPlayerIn method => to compare if the id of the player(user) that is logged in is equal to one of the id of the gameplayers in each of the games 
+    // checkIfPlayerIn method => to compare if the id of the player(user) that is logged in is equal to one of the id of the gameplayers in each of the games
     // when the ids are equals the var found equals the id and is returned
     checkIfPlayerIn(game) {
       let found = false;

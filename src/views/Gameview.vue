@@ -2,12 +2,58 @@
   <div v-if="this.info" id="container">
     <h1>Game View for GamePlayer{{ gp }}</h1>
     <div v-for="gameplayer in this.info.gamePlayers" :key="gameplayer.id">
-      <p v-if="gameplayer.player.id == gp">
-        Email: {{ gameplayer.player.email }}
-      </p>
+      <p v-if="gameplayer.id == gp">Email: {{ gameplayer.player.email }}</p>
       <p v-else>Opponent Email: {{ gameplayer.player.email }}</p>
     </div>
     <h2>Ships</h2>
+    <div class="d-flex flex-row">
+      <font-awesome-icon icon="coffee" />
+      <p>Destroyer:</p>
+      <div
+        id="Destroyer"
+        draggable="true"
+        @dragstart="drag($event), setShip({ type: 'Destroyer', shipLength: 3 })"
+      ></div>
+    </div>
+
+    <div class="d-flex flex-row">
+      <p>Carrier:</p>
+      <div
+        id="Carrier"
+        draggable="true"
+        @dragstart="drag($event), setShip({ type: 'Carrier', shipLength: 5 })"
+      ></div>
+    </div>
+
+    <div class="d-flex flex-row">
+      <p>Battleship:</p>
+      <div
+        id="Battleship"
+        draggable="true"
+        @dragstart="
+          drag($event), setShip({ type: 'Battleship', shipLength: 4 })
+        "
+      ></div>
+    </div>
+
+    <div class="d-flex flex-row">
+      <p>Submarine:</p>
+      <div
+        id="Submarine"
+        draggable="true"
+        @dragstart="drag($event), setShip({ type: 'Submarine', shipLength: 3 })"
+      ></div>
+    </div>
+
+    <div class="d-flex flex-row">
+      <p>Patrol Boat:</p>
+      <div
+        id="Patrol"
+        draggable="true"
+        @dragstart="drag($event), setShip({ type: 'Patrol', shipLength: 2 })"
+      ></div>
+    </div>
+
     <table id="shipInfo">
       <thead>
         <th>Ship ID</th>
@@ -41,6 +87,8 @@
                 :key="column + i"
                 :ref="row + i"
                 :id="row + i"
+                @drop="drop($event)"
+                @dragover="allowDrop($event)"
               >
                 <span v-if="i == 0">{{ row }}</span>
               </td>
@@ -69,6 +117,8 @@
         </table>
       </div>
     </div>
+
+    <v-btn @click="postShips">Ships</v-btn>
   </div>
 </template>
 <script>
@@ -76,11 +126,14 @@ import axios from "axios";
 
 export default {
   props: ["gp"],
+
   data() {
     return {
       info: null,
       columns: ["", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
-      rows: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+      rows: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+      selectedShip: {},
+      tdid: ""
     };
   },
 
@@ -89,6 +142,48 @@ export default {
   },
 
   methods: {
+    allowDrop(ev) {
+      ev.preventDefault();
+    },
+
+    drag(ev) {
+      this.clear();
+      ev.dataTransfer.setData("text", ev.target.id);
+    },
+
+    drop(ev) {
+      ev.preventDefault();
+      var data = ev.dataTransfer.getData("text");
+      ev.target.appendChild(document.getElementById(data));
+      this.changeWidth();
+    },
+    setShip(ship) {
+      this.selectedShip = ship;
+    },
+    changeWidth() {
+      var ship = this.selectedShip.type;
+      var change = document.getElementById(ship);
+      change.style.width = "30px";
+      var tdid = change.parentElement.getAttribute("id");
+      this.tdid = tdid;
+      var rowid = tdid.charAt(0);
+      var number = parseInt(tdid.slice(1));
+      for (var i = 0; i < this.selectedShip.shipLength; i++) {
+        document
+          .getElementById(rowid + (number + i))
+          .setAttribute("class", this.selectedShip.type);
+      }
+    },
+    clear() {
+      var rowid = this.tdid.charAt(0);
+
+      var number = parseInt(this.tdid.slice(1));
+
+      var clearCells = [];
+      for (var i = 0; i < this.selectedShip.shipLength; i++) {
+        document.getElementById(rowid + (number + i)).removeAttribute("class");
+      }
+    },
     gettingGP() {
       axios.get(`/api/game_view/${this.gp}`).then(response => {
         this.info = response.data;
@@ -145,11 +240,63 @@ export default {
           });
         });
       });
+    },
+    //*****JavaScript function to construct and POST the JSON string for a list of ships to the controller
+    postShips() {
+      fetch(`/api/games/players/${this.gp}/ships`, {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        method: "POST",
+        body: JSON.stringify([
+          { shiptype: "Destroyer", locations: ["A1", "B1", "C1"] },
+          { shiptype: "Carrier", locations: ["H3", "H4", "H5", "H6", "H7"] }
+        ])
+      })
+        .then(function(res) {
+          return res.json();
+        })
+        .then(function(data) {
+          console.log(data);
+        })
+        .catch(function(res) {
+          console.log(res);
+        });
     }
   }
 };
 </script>
 <style scoped>
+.maindiv {
+  width: 300px;
+  height: 300px;
+}
+#Destroyer {
+  width: 90px;
+  height: 30px;
+  background-color: red;
+}
+#Submarine {
+  width: 90px;
+  height: 30px;
+  background-color: green;
+}
+#Patrol {
+  width: 60px;
+  height: 30px;
+  background-color: blue;
+}
+#Battleship {
+  width: 120px;
+  height: 30px;
+  background-color: orange;
+}
+#Carrier {
+  width: 150px;
+  height: 30px;
+  background-color: blueviolet;
+}
 #shipGrid,
 #salvoGrid {
   border-collapse: collapse;
@@ -197,6 +344,12 @@ span {
 }
 .Destroyer {
   background-color: red;
+}
+.Carrier {
+  background-color: blueviolet;
+}
+.Battleship {
+  background-color: orange;
 }
 
 .\31 {

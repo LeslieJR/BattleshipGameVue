@@ -7,7 +7,6 @@
     </div>
     <h2>Ships</h2>
     <div class="d-flex flex-row">
-      <font-awesome-icon icon="coffee" />
       <p>Destroyer:</p>
       <div
         id="Destroyer"
@@ -133,7 +132,8 @@ export default {
       columns: ["", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
       rows: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
       selectedShip: {},
-      tdid: ""
+      tdid: "",
+      droppedElem: []
     };
   },
 
@@ -147,14 +147,16 @@ export default {
     },
 
     drag(ev) {
-      this.clear();
       ev.dataTransfer.setData("text", ev.target.id);
+      console.log(ev.target.id);
     },
 
     drop(ev) {
       ev.preventDefault();
+      this.clear(this.selectedShip.type);
       var data = ev.dataTransfer.getData("text");
       ev.target.appendChild(document.getElementById(data));
+      console.log(data);
       this.changeWidth();
     },
     setShip(ship) {
@@ -166,6 +168,7 @@ export default {
       change.style.width = "30px";
       var tdid = change.parentElement.getAttribute("id");
       this.tdid = tdid;
+      console.log(this.tdid);
       var rowid = tdid.charAt(0);
       var number = parseInt(tdid.slice(1));
       for (var i = 0; i < this.selectedShip.shipLength; i++) {
@@ -174,14 +177,23 @@ export default {
           .setAttribute("class", this.selectedShip.type);
       }
     },
-    clear() {
-      var rowid = this.tdid.charAt(0);
+    clear(classe) {
+      console.log("Clase", classe);
+      //***different ways to remove the class that colors de cells
 
-      var number = parseInt(this.tdid.slice(1));
+      // [...document.querySelectorAll(`td.${classe}`)].forEach(c =>
+      //   c.classList.remove(classe)
+      // );
 
-      var clearCells = [];
-      for (var i = 0; i < this.selectedShip.shipLength; i++) {
-        document.getElementById(rowid + (number + i)).removeAttribute("class");
+      // [...document.getElementsByClassName(classe)].forEach(c =>
+      //   c.classList.remove(classe)
+      // );
+
+      //document.getElementByClassName returns an HTMLcollection so it needs to be converted in an array first **!!
+      let celdas = [...document.getElementsByClassName(classe)];
+      for (let i = 0; i < celdas.length; i++) {
+        const element = celdas[i];
+        element.classList.remove(classe);
       }
     },
     gettingGP() {

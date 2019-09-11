@@ -11,6 +11,7 @@
       <div
         id="Destroyer"
         draggable="true"
+        @dragleave="check($event)"
         @dragstart="drag($event), setShip({ type: 'Destroyer', shipLength: 3 })"
       ></div>
     </div>
@@ -87,7 +88,8 @@
                 :ref="row + i"
                 :id="row + i"
                 @drop="drop($event)"
-                @dragover="allowDrop($event)"
+                @dragenter="check($event)"
+                @dragover="dropallow($event)"
               >
                 <span v-if="i == 0">{{ row }}</span>
               </td>
@@ -117,7 +119,7 @@
       </div>
     </div>
 
-    <v-btn @click="postShips">Ships</v-btn>
+    <!-- <v-btn @click="postShips">Ships</v-btn> -->
   </div>
 </template>
 <script>
@@ -133,7 +135,7 @@ export default {
       rows: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
       selectedShip: {},
       tdid: "",
-      droppedElem: []
+      allowDrop: true
     };
   },
 
@@ -142,41 +144,66 @@ export default {
   },
 
   methods: {
-    allowDrop(ev) {
-      ev.preventDefault();
+    // stopProp(ev) {
+    //   ev.stopPropagation();
+    // },
+    dropallow(ev) {
+      if (this.allowDrop == true) {
+        ev.preventDefault();
+      }
+    },
+    check(ev) {
+      this.tdid = ev.target.id;
+      console.log("tdid", this.tdid);
+      var rowid = this.tdid.charAt(0);
+      var number = parseInt(this.tdid.slice(1));
+      var cells = [];
+      for (var i = 0; i < this.selectedShip.shipLength; i++) {
+        cells.push(rowid + (number + i));
+      }
+      console.log(cells);
+      cells.forEach(cell => {
+        var celda = document.getElementById(cell);
+        if (celda != null) {
+          console.log(`this ${cell} exists`);
+          return (this.allowDrop = true);
+        }
+        return (this.allowDrop = false);
+      });
+
+      console.log(this.allowDrop);
+      // for (var j = 0; j < cells.length; j++) {
+      //   if (document.getElementById(cells[j]) == null) {
+      //     console.log("this element is null:", cells[j]);
+      //     break;
+      //   }
+      // }
+      // this.colorCells();
     },
 
     drag(ev) {
       ev.dataTransfer.setData("text", ev.target.id);
-      console.log(ev.target.id);
     },
 
     drop(ev) {
       ev.preventDefault();
+      document.getElementById(this.selectedShip.type).style.width = "30px";
+
       this.clear(this.selectedShip.type);
       var data = ev.dataTransfer.getData("text");
+      console.log("data:", data);
       ev.target.appendChild(document.getElementById(data));
-      console.log(data);
-      this.changeWidth();
+      this.colorCells();
+
+      //   var ship = this.selectedShip.type;
+      //   var change = document.getElementById(ship);
+      //   change.style.width = "30px";
+      //   console.log(cells);
     },
     setShip(ship) {
       this.selectedShip = ship;
     },
-    changeWidth() {
-      var ship = this.selectedShip.type;
-      var change = document.getElementById(ship);
-      change.style.width = "30px";
-      var tdid = change.parentElement.getAttribute("id");
-      this.tdid = tdid;
-      console.log(this.tdid);
-      var rowid = tdid.charAt(0);
-      var number = parseInt(tdid.slice(1));
-      for (var i = 0; i < this.selectedShip.shipLength; i++) {
-        document
-          .getElementById(rowid + (number + i))
-          .setAttribute("class", this.selectedShip.type);
-      }
-    },
+
     clear(classe) {
       console.log("Clase", classe);
       //***different ways to remove the class that colors de cells
@@ -191,91 +218,94 @@ export default {
 
       //document.getElementByClassName returns an HTMLcollection so it needs to be converted in an array first **!!
       let celdas = [...document.getElementsByClassName(classe)];
+      // console.log(celdas.length);
       for (let i = 0; i < celdas.length; i++) {
         const element = celdas[i];
         element.classList.remove(classe);
       }
     },
+    colorCells() {
+      console.log(this.tdid);
+      var rowid = this.tdid.charAt(0);
+      var number = parseInt(this.tdid.slice(1));
+      console.log(rowid, number);
+      for (var i = 0; i < this.selectedShip.shipLength; i++) {
+        document
+          .getElementById(rowid + (number + i))
+          .setAttribute("class", this.selectedShip.type);
+      }
+    },
     gettingGP() {
       axios.get(`/api/game_view/${this.gp}`).then(response => {
         this.info = response.data;
-        setTimeout(() => {
-          this.colorCell();
-        }, 0);
-        setTimeout(() => {
-          this.salvoesCell();
-        }, 1);
-        setTimeout(() => {
-          this.hitsCells();
-        }, 2);
+        // setTimeout(() => {
+        //   this.colorCell();
+        // }, 0);
+        // setTimeout(() => {
+        //   this.salvoesCell();
+        // }, 1);
+        // setTimeout(() => {
+        //   this.hitsCells();
+        // }, 2);
       });
-    },
-    colorCell() {
-      this.info.ships.forEach(ship => {
-        ship.locations.forEach(location => {
-          // var loc = document.getElementById(location); or
-          var loc = this.$refs[location][0];
-          loc.setAttribute("class", ship.type);
-        });
-      });
-    },
-
-    salvoesCell() {
-      this.info.salvoes.forEach(salvo => {
-        Object.keys(salvo).forEach(key => {
-          var id = salvo[key];
-          var turns = Object.keys(id);
-          id[turns].forEach(position => {
-            var loc = this.$refs[position][1];
-            loc.setAttribute("class", turns[0]);
-            loc.textContent = turns[0];
-          });
-        });
-      });
-    },
-
-    hitsCells() {
-      this.info.oppSalvoes.forEach(salvo => {
-        Object.keys(salvo).forEach(key => {
-          var id = salvo[key];
-          var turns = Object.keys(id);
-          id[turns].forEach(position => {
-            var loc = this.$refs[position][0];
-            loc.textContent = turns[0];
-            if (
-              loc.classList.contains("Patrol") ||
-              loc.classList.contains("Submarine") ||
-              loc.classList.contains("Destroyer")
-            ) {
-              loc.classList.add("hit");
-            }
-          });
-        });
-      });
-    },
-    //*****JavaScript function to construct and POST the JSON string for a list of ships to the controller
-    postShips() {
-      fetch(`/api/games/players/${this.gp}/ships`, {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json"
-        },
-        method: "POST",
-        body: JSON.stringify([
-          { shiptype: "Destroyer", locations: ["A1", "B1", "C1"] },
-          { shiptype: "Carrier", locations: ["H3", "H4", "H5", "H6", "H7"] }
-        ])
-      })
-        .then(function(res) {
-          return res.json();
-        })
-        .then(function(data) {
-          console.log(data);
-        })
-        .catch(function(res) {
-          console.log(res);
-        });
     }
+  },
+
+  salvoesCell() {
+    this.info.salvoes.forEach(salvo => {
+      Object.keys(salvo).forEach(key => {
+        var id = salvo[key];
+        var turns = Object.keys(id);
+        id[turns].forEach(position => {
+          var loc = this.$refs[position][1];
+          loc.setAttribute("class", turns[0]);
+          loc.textContent = turns[0];
+        });
+      });
+    });
+  },
+
+  hitsCells() {
+    this.info.oppSalvoes.forEach(salvo => {
+      Object.keys(salvo).forEach(key => {
+        var id = salvo[key];
+        var turns = Object.keys(id);
+        id[turns].forEach(position => {
+          var loc = this.$refs[position][0];
+          loc.textContent = turns[0];
+          if (
+            loc.classList.contains("Patrol") ||
+            loc.classList.contains("Submarine") ||
+            loc.classList.contains("Destroyer")
+          ) {
+            loc.classList.add("hit");
+          }
+        });
+      });
+    });
+  },
+  //*****JavaScript function to construct and POST the JSON string for a list of ships to the controller
+  postShips() {
+    fetch(`/api/games/players/${this.gp}/ships`, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      },
+      method: "POST",
+      body: JSON.stringify([
+        { shiptype: "Destroyer", locations: ["A1", "B1", "C1"] },
+        { shiptype: "Carrier", locations: ["H3", "H4", "H5", "H6", "H7"] }
+      ])
+    })
+      .then(function(res) {
+        return res.json();
+      })
+      .then(function(data) {
+        console.log(data);
+      })
+      .catch(function(res) {
+        console.log(res);
+      });
   }
 };
 </script>

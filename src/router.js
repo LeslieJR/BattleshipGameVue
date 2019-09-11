@@ -20,7 +20,7 @@ export default new Router({
     {
       path: '/game_view/:gp',
       name: 'game',
-      component: () => import('./views/Gameview.vue'),
+      component: () => import('./views/GameviewPrev.vue'),
       props: true,
     },
 

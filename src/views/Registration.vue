@@ -6,7 +6,7 @@
           <h1>Login/Registration Page</h1>
         </v-card-title> -->
 
-        <v-tabs v-model="tab" background-color="transparent" color="green" grow>
+        <v-tabs v-model="tab" background-color="transparent" grow>
           <v-tab v-for="item in items" :key="item">
             {{ item }}
           </v-tab>

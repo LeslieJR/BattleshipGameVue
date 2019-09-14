@@ -6,6 +6,19 @@
       <p v-else>Opponent Email: {{ gameplayer.player.email }}</p>
     </div>
     <h2>Ships</h2>
+    <div class="d-flex position">
+      <h3>Position:</h3>
+      <div>
+        <input type="radio" id="one" value="Horizontal" v-model="position" />
+        <label for="one">Horizontal</label>
+      </div>
+
+      <div>
+        <input type="radio" id="two" value="Vertical" v-model="position" />
+        <label for="two">Vertical</label>
+      </div>
+    </div>
+
     <div class="d-flex flex-row">
       <p>Destroyer:</p>
       <div
@@ -130,6 +143,7 @@ export default {
 
   data() {
     return {
+      position: "",
       info: null,
       columns: ["", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
       rows: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
@@ -144,41 +158,51 @@ export default {
   },
 
   methods: {
-    // stopProp(ev) {
-    //   ev.stopPropagation();
-    // },
+    // *******************************************************************
     dropallow(ev) {
-      if (this.allowDrop == true) {
+      if (this.allowDrop) {
         ev.preventDefault();
       }
     },
+    // the check(ev) method checks if a cell (of the array cells) exists and if it does checks if it has attribute class
     check(ev) {
       this.tdid = ev.target.id;
       console.log("tdid", this.tdid);
+      console.log(this.position);
       var rowid = this.tdid.charAt(0);
       var number = parseInt(this.tdid.slice(1));
+      console.log("rowid", rowid, "number", number);
       var cells = [];
-      for (var i = 0; i < this.selectedShip.shipLength; i++) {
-        cells.push(rowid + (number + i));
-      }
-      console.log(cells);
-      cells.forEach(cell => {
-        var celda = document.getElementById(cell);
-        if (celda != null) {
-          console.log(`this ${cell} exists`);
-          return (this.allowDrop = true);
+      if (this.position == "Vertical") {
+        // numRow is the number for the letter
+        var numbRow = rowid.charCodeAt(0);
+        for (var j = 0; j < this.selectedShip.shipLength; j++) {
+          cells.push(String.fromCharCode(numbRow + j) + number);
         }
-        return (this.allowDrop = false);
+        console.log(cells);
+      } else {
+        for (var i = 0; i < this.selectedShip.shipLength; i++) {
+          cells.push(rowid + (number + i));
+        }
+        console.log(cells);
+      }
+
+      console.log(cells);
+
+      // Array.prototype.some() => The some() method tests whether at least one element in the array passes the test implemented by the provided function. It returns a Boolean value.
+      var allow = !cells.some(cell => {
+        var celda = document.getElementById(cell);
+
+        var noCell = celda == null;
+        // in the following line if noCell is true then hasClass is true too that way the error of hasAttribute of'null' is avoided
+        // ternary:
+        var hasClass = noCell ? true : celda.hasAttribute("class");
+
+        return hasClass;
       });
 
-      console.log(this.allowDrop);
-      // for (var j = 0; j < cells.length; j++) {
-      //   if (document.getElementById(cells[j]) == null) {
-      //     console.log("this element is null:", cells[j]);
-      //     break;
-      //   }
-      // }
-      // this.colorCells();
+      this.allowDrop = allow;
+      console.log(allow);
     },
 
     drag(ev) {
@@ -188,17 +212,11 @@ export default {
     drop(ev) {
       ev.preventDefault();
       document.getElementById(this.selectedShip.type).style.width = "30px";
-
       this.clear(this.selectedShip.type);
       var data = ev.dataTransfer.getData("text");
       console.log("data:", data);
       ev.target.appendChild(document.getElementById(data));
       this.colorCells();
-
-      //   var ship = this.selectedShip.type;
-      //   var change = document.getElementById(ship);
-      //   change.style.width = "30px";
-      //   console.log(cells);
     },
     setShip(ship) {
       this.selectedShip = ship;
@@ -229,11 +247,27 @@ export default {
       var rowid = this.tdid.charAt(0);
       var number = parseInt(this.tdid.slice(1));
       console.log(rowid, number);
-      for (var i = 0; i < this.selectedShip.shipLength; i++) {
-        document
-          .getElementById(rowid + (number + i))
-          .setAttribute("class", this.selectedShip.type);
+
+      if (this.position == "Vertical") {
+        //   // numRow is the number for the letter
+        var numbRow = rowid.charCodeAt(0);
+        //   console.log(numbRow);
+        //   console.log(this.position);
+
+        for (var j = 0; j < this.selectedShip.shipLength; j++) {
+          console.log(numbRow + j);
+          document
+            .getElementById(String.fromCharCode(numbRow + j) + number)
+            .setAttribute("class", this.selectedShip.type);
+        }
+      } else {
+        for (var i = 0; i < this.selectedShip.shipLength; i++) {
+          document
+            .getElementById(rowid + (number + i))
+            .setAttribute("class", this.selectedShip.type);
+        }
       }
+      // console.log("something happen?");
     },
     gettingGP() {
       axios.get(`/api/game_view/${this.gp}`).then(response => {
@@ -297,13 +331,11 @@ export default {
         { shiptype: "Carrier", locations: ["H3", "H4", "H5", "H6", "H7"] }
       ])
     })
-      .then(function(res) {
-        return res.json();
-      })
-      .then(function(data) {
+      .then(res => res.json())
+      .then(data => {
         console.log(data);
       })
-      .catch(function(res) {
+      .catch(res => {
         console.log(res);
       });
   }
@@ -412,6 +444,18 @@ span {
     transparent calc(50% + 2px)
   );
   text-align: center;
+}
+.v-input--selection-controls {
+  margin-top: 0px;
+  padding-top: 0px;
+  padding-left: 20px;
+}
+.position {
+  border: 1px solid black;
+  width: 270px;
+  align-items: baseline;
+  justify-content: space-evenly;
+  margin-bottom: 10px;
 }
 </style>
 

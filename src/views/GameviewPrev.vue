@@ -67,21 +67,6 @@
       ></div>
     </div>
 
-    <table id="shipInfo">
-      <thead>
-        <th>Ship ID</th>
-        <th>Type</th>
-        <th>Locations</th>
-      </thead>
-      <tbody>
-        <tr v-for="ship in this.info.ships" :key="ship.id">
-          <td>{{ ship.id }}</td>
-          <td>{{ ship.type }}</td>
-          <td :id="ship.id">{{ ship.locations }}</td>
-        </tr>
-      </tbody>
-    </table>
-
     <div class="d-flex" id="tables">
       <div
         style="
@@ -123,6 +108,8 @@
                 :key="column + i"
                 :ref="row + i"
                 :id="row + i"
+                :data-counter="0"
+                @click="clickHandler($event)"
               >
                 <span v-if="i == 0">{{ row }}</span>
               </td>
@@ -132,11 +119,12 @@
       </div>
     </div>
 
-    <!-- <v-btn @click="postShips">Ships</v-btn> -->
+    <v-btn @click="postShips">Ships</v-btn>
   </div>
 </template>
 <script>
 import axios from "axios";
+import { log } from "util";
 
 export default {
   props: ["gp"],
@@ -149,7 +137,9 @@ export default {
       rows: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
       selectedShip: {},
       tdid: "",
-      allowDrop: true
+      allowDrop: true,
+      placedShips: [],
+      salvoes: []
     };
   },
 
@@ -158,7 +148,6 @@ export default {
   },
 
   methods: {
-    // *******************************************************************
     dropallow(ev) {
       if (this.allowDrop) {
         ev.preventDefault();
@@ -187,7 +176,7 @@ export default {
         console.log(cells);
       }
 
-      console.log(cells);
+      console.log("cells", cells);
 
       // Array.prototype.some() => The some() method tests whether at least one element in the array passes the test implemented by the provided function. It returns a Boolean value.
       var allow = !cells.some(cell => {
@@ -202,6 +191,7 @@ export default {
       });
 
       this.allowDrop = allow;
+
       console.log(allow);
     },
 
@@ -214,16 +204,17 @@ export default {
       document.getElementById(this.selectedShip.type).style.width = "30px";
       this.clear(this.selectedShip.type);
       var data = ev.dataTransfer.getData("text");
-      console.log("data:", data);
+      console.log("ship type", data);
       ev.target.appendChild(document.getElementById(data));
       this.colorCells();
     },
+
     setShip(ship) {
       this.selectedShip = ship;
     },
 
     clear(classe) {
-      console.log("Clase", classe);
+      console.log("Ship type", classe);
       //***different ways to remove the class that colors de cells
 
       // [...document.querySelectorAll(`td.${classe}`)].forEach(c =>
@@ -239,36 +230,46 @@ export default {
       // console.log(celdas.length);
       for (let i = 0; i < celdas.length; i++) {
         const element = celdas[i];
-        element.classList.remove(classe);
+        element.removeAttribute("class");
       }
     },
     colorCells() {
       console.log(this.tdid);
       var rowid = this.tdid.charAt(0);
       var number = parseInt(this.tdid.slice(1));
-      console.log(rowid, number);
-
+      console.log("rowid", rowid, "number", number);
+      var cells = [];
       if (this.position == "Vertical") {
-        //   // numRow is the number for the letter
+        //  numRow is the number for the letter
         var numbRow = rowid.charCodeAt(0);
-        //   console.log(numbRow);
-        //   console.log(this.position);
 
+        //   console.log(this.position);
         for (var j = 0; j < this.selectedShip.shipLength; j++) {
-          console.log(numbRow + j);
+          console.log(
+            "vertical positions:",
+            String.fromCharCode(numbRow + j) + number
+          );
+          cells.push(String.fromCharCode(numbRow + j) + number);
           document
             .getElementById(String.fromCharCode(numbRow + j) + number)
             .setAttribute("class", this.selectedShip.type);
         }
       } else {
         for (var i = 0; i < this.selectedShip.shipLength; i++) {
+          console.log("horizontal positions:", rowid + (number + i));
+          cells.push(rowid + (number + i));
           document
             .getElementById(rowid + (number + i))
             .setAttribute("class", this.selectedShip.type);
         }
       }
-      // console.log("something happen?");
+      this.placedShips.push({
+        shiptype: this.selectedShip.type,
+        locations: cells
+      });
+      console.log(this.placedShips);
     },
+
     gettingGP() {
       axios.get(`/api/game_view/${this.gp}`).then(response => {
         this.info = response.data;
@@ -282,64 +283,85 @@ export default {
         //   this.hitsCells();
         // }, 2);
       });
-    }
-  },
-
-  salvoesCell() {
-    this.info.salvoes.forEach(salvo => {
-      Object.keys(salvo).forEach(key => {
-        var id = salvo[key];
-        var turns = Object.keys(id);
-        id[turns].forEach(position => {
-          var loc = this.$refs[position][1];
-          loc.setAttribute("class", turns[0]);
-          loc.textContent = turns[0];
-        });
-      });
-    });
-  },
-
-  hitsCells() {
-    this.info.oppSalvoes.forEach(salvo => {
-      Object.keys(salvo).forEach(key => {
-        var id = salvo[key];
-        var turns = Object.keys(id);
-        id[turns].forEach(position => {
-          var loc = this.$refs[position][0];
-          loc.textContent = turns[0];
-          if (
-            loc.classList.contains("Patrol") ||
-            loc.classList.contains("Submarine") ||
-            loc.classList.contains("Destroyer")
-          ) {
-            loc.classList.add("hit");
-          }
-        });
-      });
-    });
-  },
-  //*****JavaScript function to construct and POST the JSON string for a list of ships to the controller
-  postShips() {
-    fetch(`/api/games/players/${this.gp}/ships`, {
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json"
-      },
-      method: "POST",
-      body: JSON.stringify([
-        { shiptype: "Destroyer", locations: ["A1", "B1", "C1"] },
-        { shiptype: "Carrier", locations: ["H3", "H4", "H5", "H6", "H7"] }
-      ])
-    })
-      .then(res => res.json())
-      .then(data => {
-        console.log(data);
+    },
+    postShips() {
+      console.log("clicked");
+      fetch(`/api/games/players/${this.gp}/ships`, {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        method: "POST",
+        body: JSON.stringify(this.placedShips)
       })
-      .catch(res => {
-        console.log(res);
-      });
+        .then(res => res.json())
+        .then(data => {
+          console.log(data);
+        })
+        .catch(res => {
+          console.log(res);
+        });
+    },
+
+    clickHandler(event) {
+      var salvo = event.target.id;
+      event.target.dataset.counter++;
+      console.log(event.target.id);
+      console.log("you have clicked");
+      var included = this.salvoes.includes(event.target.id);
+      console.log(included);
+      if (included) {
+        console.log(this.salvoes);
+      } else {
+        this.salvoes.push(salvo);
+      }
+      console.log(this.salvoes);
+      if (event.target.dataset.counter >= 2) {
+        console.log("remove the location");
+        var index = this.salvoes.indexOf(event.target.id);
+        var removed = this.salvoes.splice(index, 1);
+        console.log(removed);
+        console.log(this.salvoes);
+      }
+      console.log(this.salvoes);
+    }
   }
 };
+
+// salvoesCell() {
+//   this.info.salvoes.forEach(salvo => {
+//     Object.keys(salvo).forEach(key => {
+//       var id = salvo[key];
+//       var turns = Object.keys(id);
+//       id[turns].forEach(position => {
+//         var loc = this.$refs[position][1];
+//         loc.setAttribute("class", turns[0]);
+//         loc.textContent = turns[0];
+//       });
+//     });
+//   });
+// },
+
+// hitsCells() {
+//   this.info.oppSalvoes.forEach(salvo => {
+//     Object.keys(salvo).forEach(key => {
+//       var id = salvo[key];
+//       var turns = Object.keys(id);
+//       id[turns].forEach(position => {
+//         var loc = this.$refs[position][0];
+//         loc.textContent = turns[0];
+//         if (
+//           loc.classList.contains("Patrol") ||
+//           loc.classList.contains("Submarine") ||
+//           loc.classList.contains("Destroyer")
+//         ) {
+//           loc.classList.add("hit");
+//         }
+//       });
+//     });
+//   });
+// }
+//*****JavaScript function to construct and POST the JSON string for a list of ships to the controller
 </script>
 <style scoped>
 .maindiv {

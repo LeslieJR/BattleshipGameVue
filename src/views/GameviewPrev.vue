@@ -5,66 +5,72 @@
       <p v-if="gameplayer.id == gp">Email: {{ gameplayer.player.email }}</p>
       <p v-else>Opponent Email: {{ gameplayer.player.email }}</p>
     </div>
-    <h2>Ships</h2>
-    <div class="d-flex position">
-      <h3>Position:</h3>
-      <div>
-        <input type="radio" id="one" value="Horizontal" v-model="position" />
-        <label for="one">Horizontal</label>
+    <div id="ships">
+      <h2>Ships</h2>
+      <div class="d-flex position">
+        <h3>Position:</h3>
+        <div>
+          <input type="radio" id="one" value="Horizontal" v-model="position" />
+          <label for="one">Horizontal</label>
+        </div>
+
+        <div>
+          <input type="radio" id="two" value="Vertical" v-model="position" />
+          <label for="two">Vertical</label>
+        </div>
       </div>
 
-      <div>
-        <input type="radio" id="two" value="Vertical" v-model="position" />
-        <label for="two">Vertical</label>
+      <div class="d-flex flex-row">
+        <p>Destroyer:</p>
+        <div
+          id="Destroyer"
+          draggable="true"
+          @dragleave="check($event)"
+          @dragstart="
+            drag($event), setShip({ type: 'Destroyer', shipLength: 3 })
+          "
+        ></div>
       </div>
-    </div>
 
-    <div class="d-flex flex-row">
-      <p>Destroyer:</p>
-      <div
-        id="Destroyer"
-        draggable="true"
-        @dragleave="check($event)"
-        @dragstart="drag($event), setShip({ type: 'Destroyer', shipLength: 3 })"
-      ></div>
-    </div>
+      <div class="d-flex flex-row">
+        <p>Carrier:</p>
+        <div
+          id="Carrier"
+          draggable="true"
+          @dragstart="drag($event), setShip({ type: 'Carrier', shipLength: 5 })"
+        ></div>
+      </div>
 
-    <div class="d-flex flex-row">
-      <p>Carrier:</p>
-      <div
-        id="Carrier"
-        draggable="true"
-        @dragstart="drag($event), setShip({ type: 'Carrier', shipLength: 5 })"
-      ></div>
-    </div>
+      <div class="d-flex flex-row">
+        <p>Battleship:</p>
+        <div
+          id="Battleship"
+          draggable="true"
+          @dragstart="
+            drag($event), setShip({ type: 'Battleship', shipLength: 4 })
+          "
+        ></div>
+      </div>
 
-    <div class="d-flex flex-row">
-      <p>Battleship:</p>
-      <div
-        id="Battleship"
-        draggable="true"
-        @dragstart="
-          drag($event), setShip({ type: 'Battleship', shipLength: 4 })
-        "
-      ></div>
-    </div>
+      <div class="d-flex flex-row">
+        <p>Submarine:</p>
+        <div
+          id="Submarine"
+          draggable="true"
+          @dragstart="
+            drag($event), setShip({ type: 'Submarine', shipLength: 3 })
+          "
+        ></div>
+      </div>
 
-    <div class="d-flex flex-row">
-      <p>Submarine:</p>
-      <div
-        id="Submarine"
-        draggable="true"
-        @dragstart="drag($event), setShip({ type: 'Submarine', shipLength: 3 })"
-      ></div>
-    </div>
-
-    <div class="d-flex flex-row">
-      <p>Patrol Boat:</p>
-      <div
-        id="Patrol"
-        draggable="true"
-        @dragstart="drag($event), setShip({ type: 'Patrol', shipLength: 2 })"
-      ></div>
+      <div class="d-flex flex-row">
+        <p>Patrol Boat:</p>
+        <div
+          id="Patrol"
+          draggable="true"
+          @dragstart="drag($event), setShip({ type: 'Patrol', shipLength: 2 })"
+        ></div>
+      </div>
     </div>
 
     <div class="d-flex" id="tables">
@@ -94,9 +100,14 @@
             </tr>
           </tbody>
         </table>
+        <v-btn @click="postShips" id="postShips">Post Ships</v-btn>
       </div>
-      <div>
+      <div class="salvoes">
         <h2>Salvoes fired</h2>
+        <v-card id="card">
+          <v-card-title>Alert</v-card-title>
+          <v-card-text>Only 5 salvoes can be posted...</v-card-text>
+        </v-card>
         <table id="salvoGrid">
           <thead>
             <th v-for="column in columns" :key="column">{{ column }}</th>
@@ -116,10 +127,9 @@
             </tr>
           </tbody>
         </table>
+        <v-btn @click="postSalvoes">Post Salvoes</v-btn>
       </div>
     </div>
-
-    <v-btn @click="postShips">Ships</v-btn>
   </div>
 </template>
 <script>
@@ -139,7 +149,8 @@ export default {
       tdid: "",
       allowDrop: true,
       placedShips: [],
-      salvoes: []
+      salvoes: [],
+      turn: 1
     };
   },
 
@@ -269,16 +280,26 @@ export default {
       });
       console.log(this.placedShips);
     },
-
+    colorShips() {
+      // document.getElementById("ships").style.display = "none";
+      // document.getElementById("postShips").style.display = "none";
+      this.info.ships.forEach(ship => {
+        ship.locations.forEach(location => {
+          // var loc = document.getElementById(location); or
+          var loc = this.$refs[location][0];
+          loc.setAttribute("class", ship.type);
+        });
+      });
+    },
     gettingGP() {
       axios.get(`/api/game_view/${this.gp}`).then(response => {
         this.info = response.data;
-        // setTimeout(() => {
-        //   this.colorCell();
-        // }, 0);
-        // setTimeout(() => {
-        //   this.salvoesCell();
-        // }, 1);
+        setTimeout(() => {
+          this.colorShips();
+        }, 0);
+        setTimeout(() => {
+          this.salvoesCell();
+        }, 1);
         // setTimeout(() => {
         //   this.hitsCells();
         // }, 2);
@@ -305,17 +326,32 @@ export default {
 
     clickHandler(event) {
       var salvo = event.target.id;
+      console.log(salvo);
+      if (document.getElementById(salvo).hasAttribute("class")) {
+        console.log("salvo already fired");
+      }
       event.target.dataset.counter++;
-      console.log(event.target.id);
+      var loc = this.$refs[event.target.id][1];
+      loc.setAttribute("class", "salvo");
+      loc.textContent = this.turn;
       console.log("you have clicked");
       var included = this.salvoes.includes(event.target.id);
       console.log(included);
       if (included) {
         console.log(this.salvoes);
-      } else {
+        loc.removeAttribute("class");
+        loc.textContent = "";
+      } else if (this.salvoes.length < 5) {
         this.salvoes.push(salvo);
+      } else if (this.salvoes.length == 5) {
+        console.log("no more pushes");
+        // document.getElementById("card").style.display = "block";
+        loc.removeAttribute("class");
+        loc.textContent = "";
+      } else {
+        console.log("something wrong happened");
       }
-      console.log(this.salvoes);
+
       if (event.target.dataset.counter >= 2) {
         console.log("remove the location");
         var index = this.salvoes.indexOf(event.target.id);
@@ -324,23 +360,45 @@ export default {
         console.log(this.salvoes);
       }
       console.log(this.salvoes);
+    },
+    postSalvoes() {
+      console.log("salvoes on the way");
+      fetch(`/api/games/players/${this.gp}/salvos`, {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json"
+        },
+        method: "POST",
+        body: JSON.stringify(this.salvoes)
+      })
+        .then(res => res.json())
+        .then(data => {
+          console.log(data);
+        })
+        .catch(res => {
+          console.log(res);
+        });
+
+      this.salvoes = [];
+      console.log(this.salvoes);
+      this.turn++;
+      console.log(this.turn);
+    },
+    salvoesCell() {
+      this.info.salvoes.forEach(salvo => {
+        Object.keys(salvo).forEach(key => {
+          var id = salvo[key];
+          var turns = Object.keys(id);
+          id[turns].forEach(position => {
+            var loc = this.$refs[position][1];
+            loc.setAttribute("class", "fired");
+            loc.textContent = turns[0];
+          });
+        });
+      });
     }
   }
 };
-
-// salvoesCell() {
-//   this.info.salvoes.forEach(salvo => {
-//     Object.keys(salvo).forEach(key => {
-//       var id = salvo[key];
-//       var turns = Object.keys(id);
-//       id[turns].forEach(position => {
-//         var loc = this.$refs[position][1];
-//         loc.setAttribute("class", turns[0]);
-//         loc.textContent = turns[0];
-//       });
-//     });
-//   });
-// },
 
 // hitsCells() {
 //   this.info.oppSalvoes.forEach(salvo => {
@@ -448,13 +506,16 @@ span {
   background-color: orange;
 }
 
-.\31 {
-  background-color: rgb(255, 210, 127);
+.salvo {
+  background-image: url("../img/bomb.jpg");
+  background-size: cover;
+  color: white;
   text-align: center;
 }
-
-.\32 {
-  background-color: rgb(43, 226, 98);
+.fired {
+  background-image: url("../img/splash.jpg");
+  background-size: cover;
+  color: black;
   text-align: center;
 }
 
@@ -478,6 +539,15 @@ span {
   align-items: baseline;
   justify-content: space-evenly;
   margin-bottom: 10px;
+}
+.salvoes {
+  position: relative;
+}
+#card {
+  display: none;
+  position: absolute;
+  left: 69px;
+  top: 150px;
 }
 </style>
 

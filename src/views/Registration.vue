@@ -36,7 +36,7 @@
                   ></v-text-field>
                 </v-form>
                 <div class="flex-grow-1"></div>
-                <v-btn color="green" @click="login">Log In</v-btn>
+                <v-btn @click="login">Log In</v-btn>
               </v-card-text>
               <v-card-text v-else>
                 <v-form>
@@ -57,7 +57,7 @@
                     v-model="password"
                   ></v-text-field>
                 </v-form>
-                <v-btn color="green" @click="register">Sign Up</v-btn>
+                <v-btn @click="register">Sign Up</v-btn>
               </v-card-text>
             </v-card>
           </v-tab-item>

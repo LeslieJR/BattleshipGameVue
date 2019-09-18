@@ -458,7 +458,7 @@ export default {
 
 #shipGrid td,
 #salvoGrid td {
-  border: 1px solid black;
+  border: 1px solid white;
   width: 30px;
   height: 30px;
 }
@@ -468,28 +468,11 @@ export default {
   border: none;
   font-weight: 600;
 }
-#shipInfo {
-  border-collapse: collapse;
-  margin-bottom: 30px;
-  margin-top: 30px;
-}
-
-#shipInfo td,
-#shipInfo th {
-  border: 1px solid black;
-}
-
-#shipInfo td {
-  padding: 5px;
-}
 
 span {
   font-weight: 600;
 }
 
-#container {
-  padding-left: 10%;
-}
 .Patrol {
   background-color: blue;
 }
@@ -513,7 +496,7 @@ span {
   text-align: center;
 }
 .fired {
-  background-image: url("../img/splash.jpg");
+  background-image: url("../img/splash.png");
   background-size: cover;
   color: black;
   text-align: center;
@@ -548,6 +531,18 @@ span {
   position: absolute;
   left: 69px;
   top: 150px;
+}
+#container {
+  color: white;
+  text-shadow: 2px 2px 4px #000000;
+  padding-left: 10%;
+  background-image: linear-gradient(
+      to bottom,
+      rgba(110, 115, 255, 0.1),
+      rgba(80, 140, 255, 0.6)
+    ),
+    url("../img/ships.jpg");
+  background-size: cover;
 }
 </style>
 

@@ -150,6 +150,7 @@ export default {
       allowDrop: true,
       placedShips: [],
       salvoes: [],
+      alreadyFired: [],
       turn: 1
     };
   },
@@ -327,39 +328,37 @@ export default {
     clickHandler(event) {
       var salvo = event.target.id;
       console.log(salvo);
-      if (document.getElementById(salvo).hasAttribute("class")) {
-        console.log("salvo already fired");
-      }
-      event.target.dataset.counter++;
-      var loc = this.$refs[event.target.id][1];
-      loc.setAttribute("class", "salvo");
-      loc.textContent = this.turn;
-      console.log("you have clicked");
-      var included = this.salvoes.includes(event.target.id);
-      console.log(included);
-      if (included) {
-        console.log(this.salvoes);
-        loc.removeAttribute("class");
-        loc.textContent = "";
-      } else if (this.salvoes.length < 5) {
-        this.salvoes.push(salvo);
-      } else if (this.salvoes.length == 5) {
-        console.log("no more pushes");
-        // document.getElementById("card").style.display = "block";
-        loc.removeAttribute("class");
-        loc.textContent = "";
-      } else {
-        console.log("something wrong happened");
-      }
+      if (!this.alreadyFired.includes(salvo)) {
+        event.target.dataset.counter++;
+        var loc = this.$refs[salvo][1];
+        loc.setAttribute("class", "salvo");
+        loc.textContent = this.turn;
+        console.log("you have clicked");
+        var included = this.salvoes.includes(event.target.id);
+        console.log(included);
+        if (included) {
+          console.log(this.salvoes);
+          loc.removeAttribute("class");
+          loc.textContent = "";
+        } else if (this.salvoes.length < 5) {
+          this.salvoes.push(salvo);
+        } else if (this.salvoes.length == 5) {
+          console.log("no more pushes");
+          loc.removeAttribute("class");
+          loc.textContent = "";
+        } else {
+          console.log("something wrong happened");
+        }
 
-      if (event.target.dataset.counter >= 2) {
-        console.log("remove the location");
-        var index = this.salvoes.indexOf(event.target.id);
-        var removed = this.salvoes.splice(index, 1);
-        console.log(removed);
+        if (event.target.dataset.counter >= 2) {
+          console.log("remove the location");
+          var index = this.salvoes.indexOf(event.target.id);
+          var removed = this.salvoes.splice(index, 1);
+          console.log(removed);
+          console.log(this.salvoes);
+        }
         console.log(this.salvoes);
       }
-      console.log(this.salvoes);
     },
     postSalvoes() {
       console.log("salvoes on the way");
@@ -378,7 +377,8 @@ export default {
         .catch(res => {
           console.log(res);
         });
-
+      this.alreadyFired = this.salvoes;
+      console.log("already fired", this.alreadyFired);
       this.salvoes = [];
       console.log(this.salvoes);
       this.turn++;

@@ -130,6 +130,10 @@
         <v-btn @click="postSalvoes">Post Salvoes</v-btn>
       </div>
     </div>
+    <div class="sunkShips">
+      <h1>Sunk Opponent ships</h1>
+      <p v-if="this.sunk" class="sunk">{{ this.sunk }}</p>
+    </div>
   </div>
 </template>
 <script>
@@ -151,7 +155,8 @@ export default {
       placedShips: [],
       salvoes: [],
       alreadyFired: [],
-      turn: 1
+      turn: 1,
+      sunk: ""
     };
   },
 
@@ -295,15 +300,16 @@ export default {
     gettingGP() {
       axios.get(`/api/game_view/${this.gp}`).then(response => {
         this.info = response.data;
+        console.log(this.info);
         setTimeout(() => {
           this.colorShips();
         }, 0);
         setTimeout(() => {
           this.salvoesCell();
         }, 1);
-        // setTimeout(() => {
-        //   this.hitsCells();
-        // }, 2);
+        setTimeout(() => {
+          this.hitsCells();
+        }, 2);
       });
     },
     postShips() {
@@ -385,43 +391,97 @@ export default {
       console.log(this.turn);
     },
     salvoesCell() {
-      this.info.salvoes.forEach(salvo => {
+      var salvoShip = Object.keys(this.info.hits);
+      for (var i = 0; i < salvoShip.length; i++) {
+        var turns = Object.keys(this.info.hits[salvoShip[i]]);
+        for (var j = 0; j < turns.length; j++) {
+          this.info.hits[salvoShip[i]][turns[j]].hits.forEach(hit => {
+            var loc = this.$refs[hit][1];
+            loc.setAttribute("class", "hit");
+            loc.textContent = turns[j];
+          });
+        }
+      }
+      for (var k = 0; k < this.info.salvos.length; k++) {
+        var turn = Object.keys(this.info.salvos[k][this.gp]);
+        var positions = this.info.salvos[k][this.gp][turn];
+        for (var l = 0; l < positions.length; l++) {
+          var pos = this.$refs[positions[l]][1];
+          if (!pos.classList.contains("hit")) {
+            pos.setAttribute("class", "fired");
+            pos.textContent = turn;
+          }
+        }
+      }
+    },
+    hitsCells() {
+      this.info.oppSalvos.forEach(salvo => {
         Object.keys(salvo).forEach(key => {
           var id = salvo[key];
           var turns = Object.keys(id);
           id[turns].forEach(position => {
-            var loc = this.$refs[position][1];
-            loc.setAttribute("class", "fired");
+            var loc = this.$refs[position][0];
             loc.textContent = turns[0];
+            if (
+              loc.classList.contains("Patrol") ||
+              loc.classList.contains("Submarine") ||
+              loc.classList.contains("Destroyer")
+            ) {
+              loc.classList.add("hit");
+            } else {
+              loc.classList.add("fired");
+            }
           });
         });
       });
+    },
+    sunkShips() {
+      var keys = Object.keys(this.info.hits);
+      console.log(keys);
+      var length;
+
+      for (var i = 0; i < keys.length; i++) {
+        if (keys[i] == "Destroyer") {
+          length = 3;
+        } else if (keys[i] == "Submarine") {
+          length = 3;
+        } else if (keys[i] == "Carrier") {
+          length = 5;
+        } else if (keys[i] == "Battleship") {
+          length = 3;
+        } else if (keys[i] == "Patrol Boat") {
+          length = 2;
+        }
+        console.log("ship length", length);
+        var turns = Object.keys(this.info.hits[keys[i]]);
+        var hitsLength = [];
+        for (var j = 0; j < turns.length; j++) {
+          var hits = this.info.hits[keys[i]][turns[j]].hits.length;
+          hitsLength.push(hits);
+          console.log(keys[i], turns[j], hits);
+        }
+        console.log("hitLength", hitsLength);
+        var hitted = 0;
+        for (var k = 0; k < hitsLength.length; k++) {
+          hitted = hitted + hitsLength[k];
+        }
+        console.log("hitted", hitted);
+        if (hitted == length) {
+          this.sunk = keys[i];
+        }
+      }
     }
   }
 };
-
-// hitsCells() {
-//   this.info.oppSalvoes.forEach(salvo => {
-//     Object.keys(salvo).forEach(key => {
-//       var id = salvo[key];
-//       var turns = Object.keys(id);
-//       id[turns].forEach(position => {
-//         var loc = this.$refs[position][0];
-//         loc.textContent = turns[0];
-//         if (
-//           loc.classList.contains("Patrol") ||
-//           loc.classList.contains("Submarine") ||
-//           loc.classList.contains("Destroyer")
-//         ) {
-//           loc.classList.add("hit");
-//         }
-//       });
-//     });
-//   });
-// }
-//*****JavaScript function to construct and POST the JSON string for a list of ships to the controller
 </script>
 <style scoped>
+button {
+  padding-left: 5px;
+  padding-right: 5px;
+  margin-left: 120px;
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
 .maindiv {
   width: 300px;
   height: 300px;
@@ -490,7 +550,7 @@ span {
 }
 
 .salvo {
-  background-image: url("../img/bomb.jpg");
+  background-image: url("../img/bomb.png");
   background-size: cover;
   color: white;
   text-align: center;
@@ -499,16 +559,14 @@ span {
   background-image: url("../img/splash.png");
   background-size: cover;
   color: black;
+  text-shadow: 2px 2px 2px white;
   text-align: center;
 }
 
 .hit {
-  background-image: linear-gradient(
-    to bottom right,
-    transparent calc(50% - 2px),
-    red,
-    transparent calc(50% + 2px)
-  );
+  color: black;
+  background-image: url("../img/boom.png");
+  background-size: contain;
   text-align: center;
 }
 .v-input--selection-controls {
@@ -543,6 +601,9 @@ span {
     ),
     url("../img/ships.jpg");
   background-size: cover;
+}
+.sunk {
+  text-decoration: line-through;
 }
 </style>
 

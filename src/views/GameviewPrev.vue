@@ -132,7 +132,10 @@
     </div>
     <div class="sunkShips">
       <h1>Sunk Opponent ships</h1>
-      <p v-if="this.sunk" class="sunk">{{ this.sunk }}</p>
+      <v-btn @click="sunkShips" class="sunkBtn">Show sunk ships</v-btn>
+      <div v-if="this.sunk" class="sunk">
+        <p v-for="sunkShip in sunk" :key="sunkShip">{{ sunkShip }}</p>
+      </div>
     </div>
   </div>
 </template>
@@ -156,7 +159,7 @@ export default {
       salvoes: [],
       alreadyFired: [],
       turn: 1,
-      sunk: ""
+      sunk: []
     };
   },
 
@@ -467,7 +470,7 @@ export default {
         }
         console.log("hitted", hitted);
         if (hitted == length) {
-          this.sunk = keys[i];
+          this.sunk.push(keys[i]);
         }
       }
     }
@@ -604,6 +607,11 @@ span {
 }
 .sunk {
   text-decoration: line-through;
+}
+.sunkBtn {
+  color: black;
+  padding: 0;
+  margin: 0;
 }
 </style>
 

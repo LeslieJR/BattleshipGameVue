@@ -20,56 +20,60 @@
         </div>
       </div>
 
-      <div class="d-flex flex-row">
-        <p>Destroyer:</p>
-        <div
-          id="Destroyer"
-          draggable="true"
-          @dragleave="check($event)"
-          @dragstart="
-            drag($event), setShip({ type: 'Destroyer', shipLength: 3 })
-          "
-        ></div>
-      </div>
+      <div class="ships">
+        <div>
+          <p>Destroyer:</p>
+          <div
+            id="Destroyer"
+            draggable="true"
+            @dragleave="check($event)"
+            @dragstart="
+              drag($event), setShip({ type: 'Destroyer', shipLength: 3 })
+            "
+          ></div>
+        </div>
+        <div>
+          <p>Battleship:</p>
+          <div
+            id="Battleship"
+            draggable="true"
+            @dragstart="
+              drag($event), setShip({ type: 'Battleship', shipLength: 4 })
+            "
+          ></div>
+        </div>
 
-      <div class="d-flex flex-row">
-        <p>Carrier:</p>
-        <div
-          id="Carrier"
-          draggable="true"
-          @dragstart="drag($event), setShip({ type: 'Carrier', shipLength: 5 })"
-        ></div>
-      </div>
+        <div>
+          <p>Submarine:</p>
+          <div
+            id="Submarine"
+            draggable="true"
+            @dragstart="
+              drag($event), setShip({ type: 'Submarine', shipLength: 3 })
+            "
+          ></div>
+        </div>
 
-      <div class="d-flex flex-row">
-        <p>Battleship:</p>
-        <div
-          id="Battleship"
-          draggable="true"
-          @dragstart="
-            drag($event), setShip({ type: 'Battleship', shipLength: 4 })
-          "
-        ></div>
-      </div>
-
-      <div class="d-flex flex-row">
-        <p>Submarine:</p>
-        <div
-          id="Submarine"
-          draggable="true"
-          @dragstart="
-            drag($event), setShip({ type: 'Submarine', shipLength: 3 })
-          "
-        ></div>
-      </div>
-
-      <div class="d-flex flex-row">
-        <p>Patrol Boat:</p>
-        <div
-          id="Patrol"
-          draggable="true"
-          @dragstart="drag($event), setShip({ type: 'Patrol', shipLength: 2 })"
-        ></div>
+        <div>
+          <p>Patrol Boat:</p>
+          <div
+            id="Patrol"
+            draggable="true"
+            @dragstart="
+              drag($event), setShip({ type: 'Patrol', shipLength: 2 })
+            "
+          ></div>
+        </div>
+        <div>
+          <p>Carrier:</p>
+          <div
+            id="Carrier"
+            draggable="true"
+            @dragstart="
+              drag($event), setShip({ type: 'Carrier', shipLength: 5 })
+            "
+          ></div>
+        </div>
       </div>
     </div>
 
@@ -80,6 +84,16 @@
 "
       >
         <h2>Ship Grid</h2>
+        <v-alert
+          id="alert"
+          border="right"
+          colored-border
+          type="error"
+          elevation="2"
+        >
+          {{ this.alert }}
+          <v-btn small><v-icon>mdi-close</v-icon></v-btn>
+        </v-alert>
         <table id="shipGrid">
           <thead>
             <th v-for="column in columns" :key="column">{{ column }}</th>
@@ -102,12 +116,8 @@
         </table>
         <v-btn @click="postShips" id="postShips">Post Ships</v-btn>
       </div>
-      <div class="salvoes">
-        <h2>Salvoes fired</h2>
-        <v-card id="card">
-          <v-card-title>Alert</v-card-title>
-          <v-card-text>Only 5 salvoes can be posted...</v-card-text>
-        </v-card>
+      <div id="salvoes">
+        <h2>Salvoes</h2>
         <table id="salvoGrid">
           <thead>
             <th v-for="column in columns" :key="column">{{ column }}</th>
@@ -127,10 +137,10 @@
             </tr>
           </tbody>
         </table>
-        <v-btn @click="postSalvoes">Post Salvoes</v-btn>
+        <v-btn id="postSalvos" @click="postSalvoes">Post Salvoes</v-btn>
       </div>
     </div>
-    <div class="sunkShips">
+    <div id="sunkShips">
       <h1>Sunk Opponent ships</h1>
       <v-btn @click="sunkShips" class="sunkBtn">Show sunk ships</v-btn>
       <div v-if="this.sunk" class="sunk">
@@ -141,7 +151,6 @@
 </template>
 <script>
 import axios from "axios";
-import { log } from "util";
 
 export default {
   props: ["gp"],
@@ -159,7 +168,8 @@ export default {
       salvoes: [],
       alreadyFired: [],
       turn: 1,
-      sunk: []
+      sunk: [],
+      alert: ""
     };
   },
 
@@ -290,15 +300,21 @@ export default {
       console.log(this.placedShips);
     },
     colorShips() {
-      // document.getElementById("ships").style.display = "none";
-      // document.getElementById("postShips").style.display = "none";
-      this.info.ships.forEach(ship => {
-        ship.locations.forEach(location => {
-          // var loc = document.getElementById(location); or
-          var loc = this.$refs[location][0];
-          loc.setAttribute("class", ship.type);
+      if (this.info.ships.length != 0) {
+        document.getElementById("postShips").style.display = "none";
+        document.getElementById("ships").style.display = "none";
+        this.info.ships.forEach(ship => {
+          ship.locations.forEach(location => {
+            // var loc = document.getElementById(location); or
+            var loc = this.$refs[location][0];
+            loc.setAttribute("class", ship.type);
+          });
         });
-      });
+        document.getElementById("salvoes").style.display = "block";
+      } else {
+        document.getElementById("salvoes").style.display = "none";
+        console.log("place ships");
+      }
     },
     gettingGP() {
       axios.get(`/api/game_view/${this.gp}`).then(response => {
@@ -308,10 +324,14 @@ export default {
           this.colorShips();
         }, 0);
         setTimeout(() => {
-          this.salvoesCell();
+          if (this.info.salvos.length !== 0) {
+            this.salvoesCell();
+          }
         }, 1);
         setTimeout(() => {
-          this.hitsCells();
+          if (this.info.hits) {
+            this.hitsCells();
+          }
         }, 2);
       });
     },
@@ -327,13 +347,25 @@ export default {
       })
         .then(res => res.json())
         .then(data => {
-          console.log(data);
+          console.log("response entity", data);
+
+          if (data.error) {
+            this.alert = data.error;
+            document.getElementById("alert").style.display = "block";
+          } else if (data.ok) {
+            this.alert = data.ok;
+            document.getElementById("alert").style.display = "none";
+          }
+          //
+
+          // this.alert = data.error;
         })
         .catch(res => {
-          console.log(res);
+          console.log("res", res);
         });
     },
 
+    // function to print the salvoes of the current user (second click remove the salvo placed, only 5 slavoes per turn)
     clickHandler(event) {
       var salvo = event.target.id;
       console.log(salvo);
@@ -394,12 +426,16 @@ export default {
       console.log(this.turn);
     },
     salvoesCell() {
+      console.log(Object.entries(this.info.hits).length);
+      console.log("object is not empty");
       var salvoShip = Object.keys(this.info.hits);
+      console.log(salvoShip);
       for (var i = 0; i < salvoShip.length; i++) {
         var turns = Object.keys(this.info.hits[salvoShip[i]]);
         for (var j = 0; j < turns.length; j++) {
           this.info.hits[salvoShip[i]][turns[j]].hits.forEach(hit => {
             var loc = this.$refs[hit][1];
+            console.log("loc", loc, "turn", turns[j]);
             loc.setAttribute("class", "hit");
             loc.textContent = turns[j];
           });
@@ -440,7 +476,7 @@ export default {
     },
     sunkShips() {
       var keys = Object.keys(this.info.hits);
-      console.log(keys);
+      // console.log(keys);
       var length;
 
       for (var i = 0; i < keys.length; i++) {
@@ -455,20 +491,20 @@ export default {
         } else if (keys[i] == "Patrol Boat") {
           length = 2;
         }
-        console.log("ship length", length);
+        // console.log("ship length", length);
         var turns = Object.keys(this.info.hits[keys[i]]);
         var hitsLength = [];
         for (var j = 0; j < turns.length; j++) {
           var hits = this.info.hits[keys[i]][turns[j]].hits.length;
           hitsLength.push(hits);
-          console.log(keys[i], turns[j], hits);
+          // console.log(keys[i], turns[j], hits);
         }
-        console.log("hitLength", hitsLength);
+        // console.log("hitLength", hitsLength);
         var hitted = 0;
         for (var k = 0; k < hitsLength.length; k++) {
           hitted = hitted + hitsLength[k];
         }
-        console.log("hitted", hitted);
+        // console.log("hitted", hitted);
         if (hitted == length) {
           this.sunk.push(keys[i]);
         }
@@ -478,6 +514,13 @@ export default {
 };
 </script>
 <style scoped>
+.v-alert {
+  display: none;
+  position: absolute;
+  bottom: 250px;
+  left: 190px;
+  text-shadow: none;
+}
 button {
   padding-left: 5px;
   padding-right: 5px;
@@ -488,6 +531,11 @@ button {
 .maindiv {
   width: 300px;
   height: 300px;
+}
+div.ships {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  grid-gap: 5px 20px;
 }
 #Destroyer {
   width: 90px;
@@ -514,6 +562,7 @@ button {
   height: 30px;
   background-color: blueviolet;
 }
+
 #shipGrid,
 #salvoGrid {
   border-collapse: collapse;
@@ -578,22 +627,23 @@ span {
   padding-left: 20px;
 }
 .position {
-  border: 1px solid black;
+  border: 2px solid white;
   width: 270px;
   align-items: baseline;
   justify-content: space-evenly;
   margin-bottom: 10px;
 }
-.salvoes {
-  position: relative;
-}
-#card {
+/* #salvoes {
+  display: none;
+} */
+/* #card {
   display: none;
   position: absolute;
   left: 69px;
   top: 150px;
-}
+} */
 #container {
+  height: 130vh;
   color: white;
   text-shadow: 2px 2px 4px #000000;
   padding-left: 10%;
@@ -604,9 +654,13 @@ span {
     ),
     url("../img/ships.jpg");
   background-size: cover;
+  padding: 0 15%;
 }
 .sunk {
   text-decoration: line-through;
+}
+#sunkShips {
+  display: none;
 }
 .sunkBtn {
   color: black;

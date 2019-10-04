@@ -1,150 +1,161 @@
 <template>
-  <div v-if="this.info" id="container">
-    <h1>Game View for GamePlayer{{ gp }}</h1>
-    <div v-for="gameplayer in this.info.gamePlayers" :key="gameplayer.id">
-      <p v-if="gameplayer.id == gp">Email: {{ gameplayer.player.email }}</p>
-      <p v-else>Opponent Email: {{ gameplayer.player.email }}</p>
+  <div>
+    <div id="alert" style="display = none">
+      <h1>{{ this.alert }}</h1>
     </div>
-    <div id="ships">
-      <h2>Ships</h2>
-      <div class="d-flex position">
-        <h3>Position:</h3>
-        <div>
-          <input type="radio" id="one" value="Horizontal" v-model="position" />
-          <label for="one">Horizontal</label>
+    <div v-if="this.info" id="container">
+      <h1>Game View for GamePlayer{{ gp }}</h1>
+      <div v-for="gameplayer in this.info.gamePlayers" :key="gameplayer.id">
+        <p v-if="gameplayer.id == gp">Email: {{ gameplayer.player.email }}</p>
+        <p v-else>Opponent Email: {{ gameplayer.player.email }}</p>
+      </div>
+
+      <div id="ships">
+        <h2>Ships</h2>
+        <div class="d-flex position">
+          <h3>Position:</h3>
+          <div>
+            <input
+              type="radio"
+              id="one"
+              value="Horizontal"
+              v-model="position"
+            />
+            <label for="one">Horizontal</label>
+          </div>
+
+          <div>
+            <input type="radio" id="two" value="Vertical" v-model="position" />
+            <label for="two">Vertical</label>
+          </div>
         </div>
 
-        <div>
-          <input type="radio" id="two" value="Vertical" v-model="position" />
-          <label for="two">Vertical</label>
+        <div class="ships">
+          <div>
+            <p>Destroyer:</p>
+            <div
+              id="Destroyer"
+              draggable="true"
+              @dragleave="check($event)"
+              @dragstart="
+                drag($event), setShip({ type: 'Destroyer', shipLength: 3 })
+              "
+            ></div>
+          </div>
+          <div>
+            <p>Battleship:</p>
+            <div
+              id="Battleship"
+              draggable="true"
+              @dragstart="
+                drag($event), setShip({ type: 'Battleship', shipLength: 4 })
+              "
+            ></div>
+          </div>
+
+          <div>
+            <p>Submarine:</p>
+            <div
+              id="Submarine"
+              draggable="true"
+              @dragstart="
+                drag($event), setShip({ type: 'Submarine', shipLength: 3 })
+              "
+            ></div>
+          </div>
+
+          <div>
+            <p>Patrol Boat:</p>
+            <div
+              id="Patrol"
+              draggable="true"
+              @dragstart="
+                drag($event), setShip({ type: 'Patrol', shipLength: 2 })
+              "
+            ></div>
+          </div>
+          <div>
+            <p>Carrier:</p>
+            <div
+              id="Carrier"
+              draggable="true"
+              @dragstart="
+                drag($event), setShip({ type: 'Carrier', shipLength: 5 })
+              "
+            ></div>
+          </div>
         </div>
       </div>
 
-      <div class="ships">
-        <div>
-          <p>Destroyer:</p>
-          <div
-            id="Destroyer"
-            draggable="true"
-            @dragleave="check($event)"
-            @dragstart="
-              drag($event), setShip({ type: 'Destroyer', shipLength: 3 })
-            "
-          ></div>
-        </div>
-        <div>
-          <p>Battleship:</p>
-          <div
-            id="Battleship"
-            draggable="true"
-            @dragstart="
-              drag($event), setShip({ type: 'Battleship', shipLength: 4 })
-            "
-          ></div>
-        </div>
-
-        <div>
-          <p>Submarine:</p>
-          <div
-            id="Submarine"
-            draggable="true"
-            @dragstart="
-              drag($event), setShip({ type: 'Submarine', shipLength: 3 })
-            "
-          ></div>
-        </div>
-
-        <div>
-          <p>Patrol Boat:</p>
-          <div
-            id="Patrol"
-            draggable="true"
-            @dragstart="
-              drag($event), setShip({ type: 'Patrol', shipLength: 2 })
-            "
-          ></div>
-        </div>
-        <div>
-          <p>Carrier:</p>
-          <div
-            id="Carrier"
-            draggable="true"
-            @dragstart="
-              drag($event), setShip({ type: 'Carrier', shipLength: 5 })
-            "
-          ></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="d-flex" id="tables">
-      <div
-        style="
-    padding-right: 70px;
-"
-      >
-        <h2>Ship Grid</h2>
-        <v-alert
-          id="alert"
-          border="right"
-          colored-border
-          type="error"
-          elevation="2"
+      <div class="d-flex" id="tables">
+        <div
+          style="
+      padding-right: 70px;
+  "
         >
-          {{ this.alert }}
-          <v-btn small><v-icon>mdi-close</v-icon></v-btn>
-        </v-alert>
-        <table id="shipGrid">
-          <thead>
-            <th v-for="column in columns" :key="column">{{ column }}</th>
-          </thead>
-          <tbody>
-            <tr v-for="row in rows" :key="row">
-              <td
-                v-for="(column, i) in columns"
-                :key="column + i"
-                :ref="row + i"
-                :id="row + i"
-                @drop="drop($event)"
-                @dragenter="check($event)"
-                @dragover="dropallow($event)"
-              >
-                <span v-if="i == 0">{{ row }}</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <v-btn @click="postShips" id="postShips">Post Ships</v-btn>
+          <h2>Ship Grid</h2>
+          <!-- <v-alert
+            id="alert"
+            border="right"
+            colored-border
+            type="error"
+            elevation="2"
+            dismissible
+          >
+            {{ this.alert }}
+          </v-alert> -->
+          <table id="shipGrid">
+            <thead>
+              <th v-for="column in columns" :key="column">{{ column }}</th>
+            </thead>
+            <tbody>
+              <tr v-for="row in rows" :key="row">
+                <td
+                  v-for="(column, i) in columns"
+                  :key="column + i"
+                  :ref="row + i"
+                  :id="row + i"
+                  @drop="drop($event)"
+                  @dragenter="check($event)"
+                  @dragover="dropallow($event)"
+                >
+                  <span v-if="i == 0">{{ row }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <v-btn @click="postShips" id="postShips">Post Ships</v-btn>
+        </div>
+        <div id="salvoes">
+          <h2>Salvoes</h2>
+          <table id="salvoGrid">
+            <thead>
+              <th v-for="column in columns" :key="column">{{ column }}</th>
+            </thead>
+            <tbody>
+              <tr v-for="row in rows" :key="row">
+                <td
+                  v-for="(column, i) in columns"
+                  :key="column + i"
+                  :ref="row + i"
+                  :id="row + i"
+                  :data-counter="0"
+                  @click="clickHandler($event)"
+                >
+                  <span v-if="i == 0">{{ row }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <v-btn id="postSalvos" @click="postSalvoes">Post Salvoes</v-btn>
+        </div>
       </div>
-      <div id="salvoes">
-        <h2>Salvoes</h2>
-        <table id="salvoGrid">
-          <thead>
-            <th v-for="column in columns" :key="column">{{ column }}</th>
-          </thead>
-          <tbody>
-            <tr v-for="row in rows" :key="row">
-              <td
-                v-for="(column, i) in columns"
-                :key="column + i"
-                :ref="row + i"
-                :id="row + i"
-                :data-counter="0"
-                @click="clickHandler($event)"
-              >
-                <span v-if="i == 0">{{ row }}</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <v-btn id="postSalvos" @click="postSalvoes">Post Salvoes</v-btn>
-      </div>
-    </div>
-    <div id="sunkShips">
-      <h1>Sunk Opponent ships</h1>
-      <v-btn @click="sunkShips" class="sunkBtn">Show sunk ships</v-btn>
-      <div v-if="this.sunk" class="sunk">
-        <p v-for="sunkShip in sunk" :key="sunkShip">{{ sunkShip }}</p>
+      <div id="sunkShips">
+        <h1>Sunk Opponent ships</h1>
+        <v-btn @click="sunkShips" class="sunkBtn">Show sunk ships</v-btn>
+        <div v-if="this.sunk" class="sunk">
+          <p v-for="sunkShip in sunk" :key="sunkShip">{{ sunkShip }}</p>
+        </div>
       </div>
     </div>
   </div>
@@ -178,6 +189,7 @@ export default {
   },
 
   methods: {
+    close() {},
     dropallow(ev) {
       if (this.allowDrop) {
         ev.preventDefault();
@@ -313,27 +325,49 @@ export default {
         document.getElementById("salvoes").style.display = "block";
       } else {
         document.getElementById("salvoes").style.display = "none";
-        console.log("place ships");
+        console.log("no ships placed");
       }
     },
     gettingGP() {
-      axios.get(`/api/game_view/${this.gp}`).then(response => {
-        this.info = response.data;
-        console.log(this.info);
-        setTimeout(() => {
-          this.colorShips();
-        }, 0);
-        setTimeout(() => {
-          if (this.info.salvos.length !== 0) {
-            this.salvoesCell();
+      axios
+        .get(`/api/game_view/${this.gp}`)
+        .then(response => {
+          this.info = response.data;
+          console.log(this.info.status);
+          if (this.info.status == "Waiting for opponent") {
+            // alert(this.info.status);
+            setTimeout(() => {
+              this.colorShips();
+            }, 0);
+            setTimeout(() => {
+              document.getElementById("container").style.filter = "blur(4px)";
+              document.getElementById("postShips").style.display = "none";
+              this.alert = this.info.status;
+              document.getElementById("alert").style.display = "block";
+
+              // for (let i = 0; i < ships.length; i++) {
+              //   console.log(child[i]);
+              // }
+            }, 1);
           }
-        }, 1);
-        setTimeout(() => {
-          if (this.info.hits) {
-            this.hitsCells();
-          }
-        }, 2);
-      });
+          setTimeout(() => {
+            this.colorShips();
+          }, 0);
+          setTimeout(() => {
+            if (this.info.salvos.length !== 0) {
+              this.salvoesCell();
+            }
+          }, 1);
+          setTimeout(() => {
+            if (this.info.hits) {
+              this.hitsCells();
+            }
+          }, 2);
+        })
+        .catch(function(error) {
+          // handle error
+          console.log(error);
+        });
     },
     postShips() {
       console.log("clicked");
@@ -345,23 +379,20 @@ export default {
         method: "POST",
         body: JSON.stringify(this.placedShips)
       })
-        .then(res => res.json())
-        .then(data => {
-          console.log("response entity", data);
-
-          if (data.error) {
-            this.alert = data.error;
-            document.getElementById("alert").style.display = "block";
-          } else if (data.ok) {
-            this.alert = data.ok;
-            document.getElementById("alert").style.display = "none";
-          }
-          //
-
-          // this.alert = data.error;
+        .then(result => {
+          //Here body is not ready yet, throw promise
+          if (!result.ok) throw result;
+          return result.json();
         })
-        .catch(res => {
-          console.log("res", res);
+        .then(result => {
+          //Successful request processing
+          console.log("result:",result);
+        })
+        .catch(error => {
+          //Here is still promise
+          error.json().then(body => {
+            alert(body.error);
+          });
         });
     },
 
@@ -514,12 +545,10 @@ export default {
 };
 </script>
 <style scoped>
-.v-alert {
-  display: none;
-  position: absolute;
-  bottom: 250px;
-  left: 190px;
-  text-shadow: none;
+#alert {
+  color: black;
+  background-color: white;
+  text-align: center;
 }
 button {
   padding-left: 5px;

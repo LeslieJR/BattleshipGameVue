@@ -12,6 +12,7 @@
     "ag-grid-community": "^21.1.1",
     "ag-grid-vue": "^21.1.0",
     "axios": "^0.19.0",
+    "bootbox": "^5.3.2",
     "core-js": "^2.6.5",
     "vue": "^2.6.10",
     "vue-moment": "^4.0.0",

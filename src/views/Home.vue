@@ -202,9 +202,14 @@ export default {
 };
 </script>
 <style scoped>
+/* .container {
+  background-image: url("../img/background2.jpg");
+  background-size: cover;
+} */
 table {
   border: 2px solid black;
   border-collapse: collapse;
+  background-color: white;
 }
 td,
 th {
@@ -212,14 +217,14 @@ th {
   padding: 10px;
 }
 div.container {
-  margin: 0 100px;
+  padding: 0 10%;
 }
 
 td:first-child {
   text-align: center;
 }
-.d-flex {
+/* .d-flex {
   padding-right: 10%;
-}
+} */
 </style>
 

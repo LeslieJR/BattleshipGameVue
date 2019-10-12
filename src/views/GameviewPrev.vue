@@ -88,22 +88,18 @@
       </div>
 
       <div class="d-flex" id="tables">
+        <div v-if="this.info.status == 'Waiting for opponent'">
+          <span>{{ this.info.status }}</span>
+        </div>
         <div
           style="
       padding-right: 70px;
   "
+          v-else
         >
+          <br />
           <h2>Ship Grid</h2>
-          <!-- <v-alert
-            id="alert"
-            border="right"
-            colored-border
-            type="error"
-            elevation="2"
-            dismissible
-          >
-            {{ this.alert }}
-          </v-alert> -->
+
           <table id="shipGrid">
             <thead>
               <th v-for="column in columns" :key="column">{{ column }}</th>
@@ -126,36 +122,59 @@
           </table>
           <v-btn @click="postShips" id="postShips">Post Ships</v-btn>
         </div>
+
         <div id="salvoes">
-          <h2>Salvoes</h2>
-          <table id="salvoGrid">
-            <thead>
-              <th v-for="column in columns" :key="column">{{ column }}</th>
-            </thead>
-            <tbody>
-              <tr v-for="row in rows" :key="row">
-                <td
-                  v-for="(column, i) in columns"
-                  :key="column + i"
-                  :ref="row + i"
-                  :id="row + i"
-                  :data-counter="0"
-                  @click="clickHandler($event)"
-                >
-                  <span v-if="i == 0">{{ row }}</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <v-btn id="postSalvos" @click="postSalvoes">Post Salvoes</v-btn>
+          <div
+            v-if="
+              this.info.status == 'Waiting for opponent' ||
+                this.info.status == 'Already two players, place your ships' ||
+                this.info.status == 'Waiting for the ships of the opponent' ||
+                this.info.status == 'Place your ships' ||
+                this.info.status == 'Waiting for salvos of the opponent'
+            "
+          >
+            <span>{{ this.info.status }}</span>
+          </div>
+          <div v-else>
+            <span>{{ this.info.status }}</span>
+            <h2>Salvoes</h2>
+            <table id="salvoGrid">
+              <thead>
+                <th v-for="column in columns" :key="column">{{ column }}</th>
+              </thead>
+              <tbody>
+                <tr v-for="row in rows" :key="row">
+                  <td
+                    v-for="(column, i) in columns"
+                    :key="column + i"
+                    :ref="row + i"
+                    :id="row + i"
+                    :data-counter="0"
+                    @click="clickHandler($event)"
+                  >
+                    <span v-if="i == 0">{{ row }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <v-btn
+              v-if="
+                this.info.status == 'Waiting for your salvos' ||
+                  this.info.status == 'Send salvos'
+              "
+              id="postSalvos"
+              @click="postSalvoes"
+              >Post Salvoes</v-btn
+            >
+            <span v-else></span>
+          </div>
         </div>
       </div>
-      <div id="sunkShips">
-        <h1>Sunk Opponent ships</h1>
-        <v-btn @click="sunkShips" class="sunkBtn">Show sunk ships</v-btn>
-        <div v-if="this.sunk" class="sunk">
-          <p v-for="sunkShip in sunk" :key="sunkShip">{{ sunkShip }}</p>
-        </div>
+      <div id="sunkShips" v-if="this.sunk.length != 0">
+        <h2>Sunk Opponent ships</h2>
+        <p class="sunk" v-for="sunkShip in sunk" :key="sunkShip">
+          {{ sunkShip }}
+        </p>
       </div>
     </div>
   </div>
@@ -178,7 +197,7 @@ export default {
       placedShips: [],
       salvoes: [],
       alreadyFired: [],
-      turn: 1,
+      turn: null,
       sunk: [],
       alert: ""
     };
@@ -189,7 +208,7 @@ export default {
   },
 
   methods: {
-    close() {},
+    // close() {},
     dropallow(ev) {
       if (this.allowDrop) {
         ev.preventDefault();
@@ -217,23 +236,17 @@ export default {
         }
         console.log(cells);
       }
-
       console.log("cells", cells);
-
       // Array.prototype.some() => The some() method tests whether at least one element in the array passes the test implemented by the provided function. It returns a Boolean value.
       var allow = !cells.some(cell => {
         var celda = document.getElementById(cell);
-
         var noCell = celda == null;
         // in the following line if noCell is true then hasClass is true too that way the error of hasAttribute of'null' is avoided
         // ternary:
         var hasClass = noCell ? true : celda.hasAttribute("class");
-
         return hasClass;
       });
-
       this.allowDrop = allow;
-
       console.log(allow);
     },
 
@@ -313,6 +326,7 @@ export default {
     },
     colorShips() {
       if (this.info.ships.length != 0) {
+        console.log(this.info.ships.length);
         document.getElementById("postShips").style.display = "none";
         document.getElementById("ships").style.display = "none";
         this.info.ships.forEach(ship => {
@@ -322,34 +336,16 @@ export default {
             loc.setAttribute("class", ship.type);
           });
         });
-        document.getElementById("salvoes").style.display = "block";
-      } else {
-        document.getElementById("salvoes").style.display = "none";
-        console.log("no ships placed");
+        // document.getElementById("salvoes").style.display = "block";
       }
     },
     gettingGP() {
+      console.log("fetching");
       axios
         .get(`/api/game_view/${this.gp}`)
         .then(response => {
           this.info = response.data;
-          console.log(this.info.status);
-          if (this.info.status == "Waiting for opponent") {
-            // alert(this.info.status);
-            setTimeout(() => {
-              this.colorShips();
-            }, 0);
-            setTimeout(() => {
-              document.getElementById("container").style.filter = "blur(4px)";
-              document.getElementById("postShips").style.display = "none";
-              this.alert = this.info.status;
-              document.getElementById("alert").style.display = "block";
-
-              // for (let i = 0; i < ships.length; i++) {
-              //   console.log(child[i]);
-              // }
-            }, 1);
-          }
+          console.log(this.info);
           setTimeout(() => {
             this.colorShips();
           }, 0);
@@ -361,6 +357,7 @@ export default {
           setTimeout(() => {
             if (this.info.hits) {
               this.hitsCells();
+              this.sunkShips();
             }
           }, 2);
         })
@@ -386,7 +383,7 @@ export default {
         })
         .then(result => {
           //Successful request processing
-          console.log("result:",result);
+          console.log("result:", result);
         })
         .catch(error => {
           //Here is still promise
@@ -422,7 +419,7 @@ export default {
           console.log("something wrong happened");
         }
 
-        if (event.target.dataset.counter >= 2) {
+        if (event.target.dataset.counter == 2) {
           console.log("remove the location");
           var index = this.salvoes.indexOf(event.target.id);
           var removed = this.salvoes.splice(index, 1);
@@ -495,7 +492,9 @@ export default {
             if (
               loc.classList.contains("Patrol") ||
               loc.classList.contains("Submarine") ||
-              loc.classList.contains("Destroyer")
+              loc.classList.contains("Destroyer") ||
+              loc.classList.contains("Carrier") ||
+              loc.classList.contains("Battleship")
             ) {
               loc.classList.add("hit");
             } else {
@@ -518,8 +517,8 @@ export default {
         } else if (keys[i] == "Carrier") {
           length = 5;
         } else if (keys[i] == "Battleship") {
-          length = 3;
-        } else if (keys[i] == "Patrol Boat") {
+          length = 4;
+        } else if (keys[i] == "Patrol") {
           length = 2;
         }
         // console.log("ship length", length);
@@ -528,18 +527,19 @@ export default {
         for (var j = 0; j < turns.length; j++) {
           var hits = this.info.hits[keys[i]][turns[j]].hits.length;
           hitsLength.push(hits);
-          // console.log(keys[i], turns[j], hits);
+          console.log(keys[i], turns[j], hits);
         }
-        // console.log("hitLength", hitsLength);
+        console.log("hitLength", hitsLength);
         var hitted = 0;
         for (var k = 0; k < hitsLength.length; k++) {
           hitted = hitted + hitsLength[k];
         }
-        // console.log("hitted", hitted);
+        console.log("hitted", hitted);
         if (hitted == length) {
           this.sunk.push(keys[i]);
         }
       }
+      console.log(this.sunk);
     }
   }
 };
@@ -681,16 +681,16 @@ span {
       rgba(110, 115, 255, 0.1),
       rgba(80, 140, 255, 0.6)
     ),
-    url("../img/ships.jpg");
+    url("../img/background2.jpg");
   background-size: cover;
   padding: 0 15%;
 }
 .sunk {
   text-decoration: line-through;
 }
-#sunkShips {
+/* #sunkShips {
   display: none;
-}
+} */
 .sunkBtn {
   color: black;
   padding: 0;

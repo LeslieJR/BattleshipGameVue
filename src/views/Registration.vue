@@ -90,16 +90,15 @@ export default {
         })
       })
         .then(response => {
+          console.log(response);
           if (response.ok) {
+            console.log("call login method");
             this.login();
           }
           return response.json();
         })
         .then(json => {
           console.log("Response:", json);
-          if (json) {
-            this.$router.push("/");
-          }
         })
         .catch(function(error) {
           console.log("Request failed", error);

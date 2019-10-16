@@ -1,12 +1,13 @@
 <template>
-  <div class="container">
+  <div>
     <h1>Game Manager</h1>
-    <div v-if="player != 'guest'" class="d-flex justify-space-between">
+    <div v-if="player != 'guest'" class="d-flex">
       <p>
         Welcome <b>{{ player.email }}!</b>
       </p>
-      <v-btn color="primary" @click="logout">Log Out</v-btn>
+      <v-btn class="logout" @click="logout">Log Out</v-btn>
     </div>
+
     <div v-else>
       <p>You're not logged in (Guest view)</p>
       <p>
@@ -54,7 +55,9 @@
         </tr>
       </tbody>
     </v-table>
-    <v-btn v-if="player != 'guest'" @click="createGame">CREATE A GAME</v-btn>
+    <v-btn v-if="player != 'guest'" class="create" @click="createGame"
+      >CREATE A GAME</v-btn
+    >
 
     <h1>Leaderboard</h1>
     <table>
@@ -104,7 +107,6 @@ export default {
         .then(json => {
           this.results = json.games;
           this.player = json.player; //is there is a user logged in
-          console.log(json);
         });
     },
     getScores() {
@@ -126,7 +128,6 @@ export default {
         method: "POST"
       })
         .then(data => {
-          console.log("Request success: ", data);
           if (data.ok) {
             this.fetchGames();
           }
@@ -203,9 +204,18 @@ export default {
 </script>
 <style scoped>
 /* .container {
-  background-image: url("../img/background2.jpg");
+  background-image: url("../img/ships.jpg");
   background-size: cover;
 } */
+div:first-child {
+  padding: 5%;
+  background-color: #83a6bb;
+}
+a {
+  color: black;
+  font-weight: 600;
+}
+
 table {
   border: 2px solid black;
   border-collapse: collapse;
@@ -216,13 +226,21 @@ th {
   border: 2px solid black;
   padding: 10px;
 }
-div.container {
+/* div.container {
   padding: 0 10%;
-}
+} */
 
 td:first-child {
   text-align: center;
 }
+.logout {
+  margin-left: 570px;
+}
+.create {
+  margin-top: 2%;
+  margin-bottom: 2%;
+}
+
 /* .d-flex {
   padding-right: 10%;
 } */

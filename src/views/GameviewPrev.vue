@@ -208,7 +208,31 @@ export default {
   },
 
   methods: {
-    // close() {},
+    gettingGP() {
+      axios
+        .get(`/api/game_view/${this.gp}`)
+        .then(response => {
+          this.info = response.data;
+          setTimeout(() => {
+            this.colorShips();
+          }, 0);
+          setTimeout(() => {
+            if (this.info.salvos.length !== 0) {
+              this.salvoesCell();
+            }
+          }, 1);
+          setTimeout(() => {
+            if (this.info.hits) {
+              this.hitsCells();
+              this.sunkShips();
+            }
+          }, 2);
+        })
+        .catch(function(error) {
+          // handle error
+          console.log(error);
+        });
+    },
     dropallow(ev) {
       if (this.allowDrop) {
         ev.preventDefault();
@@ -217,11 +241,8 @@ export default {
     // the check(ev) method checks if a cell (of the array cells) exists and if it does checks if it has attribute class
     check(ev) {
       this.tdid = ev.target.id;
-      console.log("tdid", this.tdid);
-      console.log(this.position);
       var rowid = this.tdid.charAt(0);
       var number = parseInt(this.tdid.slice(1));
-      console.log("rowid", rowid, "number", number);
       var cells = [];
       if (this.position == "Vertical") {
         // numRow is the number for the letter
@@ -229,14 +250,11 @@ export default {
         for (var j = 0; j < this.selectedShip.shipLength; j++) {
           cells.push(String.fromCharCode(numbRow + j) + number);
         }
-        console.log(cells);
       } else {
         for (var i = 0; i < this.selectedShip.shipLength; i++) {
           cells.push(rowid + (number + i));
         }
-        console.log(cells);
       }
-      console.log("cells", cells);
       // Array.prototype.some() => The some() method tests whether at least one element in the array passes the test implemented by the provided function. It returns a Boolean value.
       var allow = !cells.some(cell => {
         var celda = document.getElementById(cell);
@@ -259,7 +277,7 @@ export default {
       document.getElementById(this.selectedShip.type).style.width = "30px";
       this.clear(this.selectedShip.type);
       var data = ev.dataTransfer.getData("text");
-      console.log("ship type", data);
+      // console.log("ship type", data);
       ev.target.appendChild(document.getElementById(data));
       this.colorCells();
     },
@@ -269,8 +287,7 @@ export default {
     },
 
     clear(classe) {
-      console.log("Ship type", classe);
-      //***different ways to remove the class that colors de cells
+      //different ways to remove the class that colors de cells:
 
       // [...document.querySelectorAll(`td.${classe}`)].forEach(c =>
       //   c.classList.remove(classe)
@@ -282,28 +299,19 @@ export default {
 
       //document.getElementByClassName returns an HTMLcollection so it needs to be converted in an array first **!!
       let celdas = [...document.getElementsByClassName(classe)];
-      // console.log(celdas.length);
       for (let i = 0; i < celdas.length; i++) {
         const element = celdas[i];
         element.removeAttribute("class");
       }
     },
     colorCells() {
-      console.log(this.tdid);
       var rowid = this.tdid.charAt(0);
       var number = parseInt(this.tdid.slice(1));
-      console.log("rowid", rowid, "number", number);
       var cells = [];
       if (this.position == "Vertical") {
         //  numRow is the number for the letter
         var numbRow = rowid.charCodeAt(0);
-
-        //   console.log(this.position);
         for (var j = 0; j < this.selectedShip.shipLength; j++) {
-          console.log(
-            "vertical positions:",
-            String.fromCharCode(numbRow + j) + number
-          );
           cells.push(String.fromCharCode(numbRow + j) + number);
           document
             .getElementById(String.fromCharCode(numbRow + j) + number)
@@ -311,7 +319,6 @@ export default {
         }
       } else {
         for (var i = 0; i < this.selectedShip.shipLength; i++) {
-          console.log("horizontal positions:", rowid + (number + i));
           cells.push(rowid + (number + i));
           document
             .getElementById(rowid + (number + i))
@@ -322,11 +329,9 @@ export default {
         shiptype: this.selectedShip.type,
         locations: cells
       });
-      console.log(this.placedShips);
     },
     colorShips() {
       if (this.info.ships.length != 0) {
-        console.log(this.info.ships.length);
         document.getElementById("postShips").style.display = "none";
         document.getElementById("ships").style.display = "none";
         this.info.ships.forEach(ship => {
@@ -336,38 +341,10 @@ export default {
             loc.setAttribute("class", ship.type);
           });
         });
-        // document.getElementById("salvoes").style.display = "block";
       }
     },
-    gettingGP() {
-      console.log("fetching");
-      axios
-        .get(`/api/game_view/${this.gp}`)
-        .then(response => {
-          this.info = response.data;
-          console.log(this.info);
-          setTimeout(() => {
-            this.colorShips();
-          }, 0);
-          setTimeout(() => {
-            if (this.info.salvos.length !== 0) {
-              this.salvoesCell();
-            }
-          }, 1);
-          setTimeout(() => {
-            if (this.info.hits) {
-              this.hitsCells();
-              this.sunkShips();
-            }
-          }, 2);
-        })
-        .catch(function(error) {
-          // handle error
-          console.log(error);
-        });
-    },
     postShips() {
-      console.log("clicked");
+      // console.log("clicked");
       fetch(`/api/games/players/${this.gp}/ships`, {
         headers: {
           Accept: "application/json",
@@ -396,37 +373,25 @@ export default {
     // function to print the salvoes of the current user (second click remove the salvo placed, only 5 slavoes per turn)
     clickHandler(event) {
       var salvo = event.target.id;
-      console.log(salvo);
       if (!this.alreadyFired.includes(salvo)) {
         event.target.dataset.counter++;
         var loc = this.$refs[salvo][1];
         loc.setAttribute("class", "salvo");
         loc.textContent = this.turn;
-        console.log("you have clicked");
         var included = this.salvoes.includes(event.target.id);
-        console.log(included);
         if (included) {
-          console.log(this.salvoes);
           loc.removeAttribute("class");
           loc.textContent = "";
         } else if (this.salvoes.length < 5) {
           this.salvoes.push(salvo);
         } else if (this.salvoes.length == 5) {
-          console.log("no more pushes");
           loc.removeAttribute("class");
           loc.textContent = "";
-        } else {
-          console.log("something wrong happened");
         }
-
         if (event.target.dataset.counter == 2) {
-          console.log("remove the location");
           var index = this.salvoes.indexOf(event.target.id);
           var removed = this.salvoes.splice(index, 1);
-          console.log(removed);
-          console.log(this.salvoes);
         }
-        console.log(this.salvoes);
       }
     },
     postSalvoes() {
@@ -662,17 +627,9 @@ span {
   justify-content: space-evenly;
   margin-bottom: 10px;
 }
-/* #salvoes {
-  display: none;
-} */
-/* #card {
-  display: none;
-  position: absolute;
-  left: 69px;
-  top: 150px;
-} */
+
 #container {
-  height: 130vh;
+  height: 150vh;
   color: white;
   text-shadow: 2px 2px 4px #000000;
   padding-left: 10%;
